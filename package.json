@@ -1,0 +1,26 @@
+{
+    "name": "team-c-pending-backend",
+    "version": "1.0.0",
+    "private": true,
+    "description": "Team C Pending Express API",
+    "type": "module",
+    "engines": {
+        "node": "22.x",
+        "npm": ">=10"
+    },
+    "scripts": {
+        "build": "tsc",
+        "dev": "tsx watch src/index.ts",
+        "start": "node dist/index.js",
+        "test": "npm run build && node --test test/*.test.mjs"
+    },
+    "dependencies": {
+        "express": "^5.1.0"
+    },
+    "devDependencies": {
+        "@types/express": "^5.0.0",
+        "@types/node": "^22.0.0",
+        "tsx": "^4.20.6",
+        "typescript": "^5.9.3"
+    }
+}
