@@ -70,12 +70,14 @@ Never commit your `.env` file. It is already listed in [.gitignore](.gitignore);
 | `npm run build` | `tsc` then `esbuild` | Type-checks, then bundles the service into `dist/index.js` for production. |
 | `npm start` | `node dist/index.js` | Runs the built output. Requires `npm run build` first. |
 | `npm test` | `vitest run` | Runs all tests in `test/`. |
-| `npm run test:ui` | `vitest --ui` | Opens the local Vitest test dashboard. This backend has no browser application tests. |
+| `npm run test:ui` | `vitest --ui` | Opens the local Vitest test dashboard. |
 | `npm run test:coverage` | `vitest run --coverage` | Generates reports in `coverage/`; requires 100% statements, branches, functions, and lines across `src/`. |
 | `npm run lint` | `biome check .` | Checks formatting, imports, and lint rules without changing files. |
 | `npm run lint:fix` | `biome check --write .` | Applies safe automatic lint and formatting fixes. |
 
 `npm ci` installs Husky hooks through the `prepare` script. The pre-push hook runs `npm run lint` and blocks the push on failure. Run `npm run lint:fix`, review the changes, and rerun lint before pushing. Hooks can be bypassed locally, so CI checks are required as well.
+
+Tests use Vitest, with an HTTP test for the health endpoint and mocked startup, port validation, and shutdown tests. No manually running service or browser binaries are required. Test discovery and source coverage thresholds are configured in `vitest.config.ts`.
 
 ## Continuous Integration
 

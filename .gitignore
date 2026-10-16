@@ -2,5 +2,7 @@ node_modules
 dist/
 .env
 coverage/
+test-results/
+playwright-report/
 .env.*
 !.env.example

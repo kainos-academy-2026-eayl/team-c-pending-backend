@@ -1,6 +1,5 @@
-import assert from 'node:assert/strict';
 import { once } from 'node:events';
-import { test } from 'vitest';
+import { expect, test } from 'vitest';
 import { createApp } from '../src/app.ts';
 
 test('GET /health returns UP and the current ISO timestamp', async () => {
@@ -15,14 +14,15 @@ test('GET /health returns UP and the current ISO timestamp', async () => {
     const body = await response.json();
     const after = Date.now();
 
-    assert.equal(response.status, 200);
-    assert.match(response.headers.get('content-type'), /^application\/json/);
-    assert.deepEqual(Object.keys(body).sort(), ['status', 'time']);
-    assert.equal(body.status, 'UP');
-    assert.equal(typeof body.time, 'string');
+    expect(response.status).toBe(200);
+    expect(response.headers.get('content-type')).toMatch(/^application\/json/);
+    expect(Object.keys(body).sort()).toEqual(['status', 'time']);
+    expect(body.status).toBe('UP');
+    expect(typeof body.time).toBe('string');
     const timestamp = Date.parse(body.time);
-    assert.ok(timestamp >= before && timestamp <= after);
-    assert.equal(new Date(timestamp).toISOString(), body.time);
+    expect(timestamp).toBeGreaterThanOrEqual(before);
+    expect(timestamp).toBeLessThanOrEqual(after);
+    expect(new Date(timestamp).toISOString()).toBe(body.time);
   } finally {
     await new Promise((resolve, reject) => {
       server.close((error) => (error ? reject(error) : resolve()));
