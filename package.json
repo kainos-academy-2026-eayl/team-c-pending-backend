@@ -18,7 +18,8 @@
     "test:coverage": "vitest run --coverage",
     "lint": "biome check .",
     "lint:fix": "biome check --write .",
-    "prepare": "husky"
+    "prepare": "husky",
+    "postinstall": "prisma skills sync || exit 0"
   },
   "keywords": [],
   "author": "",
@@ -27,16 +28,21 @@
     "@biomejs/biome": "2.5.15",
     "@types/express": "5.0.6",
     "@types/node": "^22.20.5",
+    "@types/pg": "^8.23.1",
     "@vitest/coverage-v8": "4.1.11",
     "@vitest/ui": "4.1.11",
     "esbuild": "0.28.2",
     "husky": "9.1.7",
+    "prisma": "^7.10.1",
     "tsx": "4.23.13",
     "typescript": "^5.9.3",
     "vitest": "4.1.11"
   },
   "dependencies": {
-    "dotenv": "17.4.2",
-    "express": "5.2.1"
+    "@prisma/adapter-pg": "^7.10.1",
+    "@prisma/client": "^7.10.1",
+    "dotenv": "^17.4.2",
+    "express": "5.2.1",
+    "pg": "^8.23.1"
   }
 }
