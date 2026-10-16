@@ -1,26 +1,42 @@
 {
-    "name": "team-c-pending-backend",
-    "version": "1.0.0",
-    "private": true,
-    "description": "Team C Pending Express API",
-    "type": "module",
-    "engines": {
-        "node": "22.x",
-        "npm": ">=10"
-    },
-    "scripts": {
-        "build": "tsc",
-        "dev": "tsx watch src/index.ts",
-        "start": "node dist/index.js",
-        "test": "npm run build && node --test test/*.test.mjs"
-    },
-    "dependencies": {
-        "express": "^5.1.0"
-    },
-    "devDependencies": {
-        "@types/express": "^5.0.0",
-        "@types/node": "^22.0.0",
-        "tsx": "^4.20.6",
-        "typescript": "^5.9.3"
-    }
+  "name": "technologist-academy-node-service-template",
+  "version": "1.0.0",
+  "description": "A template repository for node services developed in the Technologist Academy",
+  "type": "module",
+  "main": "dist/index.js",
+  "engines": {
+    "node": "22.x",
+    "npm": ">=10"
+  },
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "npm run typecheck && esbuild src/index.ts --bundle --platform=node --format=esm --target=node22 --packages=external --outfile=dist/index.js --sourcemap",
+    "typecheck": "tsc",
+    "start": "node dist/index.js",
+    "test": "vitest run",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest run --coverage",
+    "lint": "biome check .",
+    "lint:fix": "biome check --write .",
+    "prepare": "husky"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@biomejs/biome": "2.5.15",
+    "@types/express": "5.0.6",
+    "@types/node": "^22.20.5",
+    "@vitest/coverage-v8": "4.1.11",
+    "@vitest/ui": "4.1.11",
+    "esbuild": "0.28.2",
+    "husky": "9.1.7",
+    "tsx": "4.23.13",
+    "typescript": "^5.9.3",
+    "vitest": "4.1.11"
+  },
+  "dependencies": {
+    "dotenv": "17.4.2",
+    "express": "5.2.1"
+  }
 }

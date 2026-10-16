@@ -1,12 +1,11 @@
-import express from "express";
+import express, { type Express, type Request, type Response } from 'express';
 
-const app = express();
+export function createApp(): Express {
+  const app = express();
 
-app.get("/health", (_request, response) => {
-    response.json({
-        status: "UP",
-        time: new Date().toISOString(),
-    });
-});
+  app.get('/health', (_req: Request, res: Response) => {
+    res.json({ status: 'UP', time: new Date().toISOString() });
+  });
 
-export default app;
+  return app;
+}
