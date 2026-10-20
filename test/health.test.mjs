@@ -1,6 +1,8 @@
 import { once } from 'node:events';
 import { expect, test } from 'vitest';
 import { createApp } from '../src/app.ts';
+import 'dotenv/config';
+
 
 test('GET /health returns UP and the current ISO timestamp', async () => {
   const server = createApp().listen(0, '127.0.0.1');

@@ -1,7 +1,8 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { createApp } from '../src/app';
+import 'dotenv/config';
 
-vi.mock('dotenv/config', () => ({}));
+
 vi.mock('../src/app', () => ({ createApp: vi.fn() }));
 
 describe('server startup', () => {
@@ -17,8 +18,8 @@ describe('server startup', () => {
       signalHandlers.set(signal, handler);
       return process;
     });
-    vi.spyOn(process, 'exit').mockImplementation(() => {});
-    vi.spyOn(console, 'log').mockImplementation(() => {});
+    vi.spyOn(process, 'exit').mockImplementation(() => { });
+    vi.spyOn(console, 'log').mockImplementation(() => { });
     close = vi.fn((callback) => callback());
     listen = vi.fn((_port, _host, callback) => {
       callback();
