@@ -4,6 +4,7 @@ import { CustomerController } from './controllers/customer_controller';
 import { CustomerRepository } from './prisma_repo/customer_repository';
 import { AuthService } from './services/auth_service';
 import { CustomerService } from './services/customer_service';
+import 'dotenv/config';
 
 export function createApp(): Express {
   const app = express();
