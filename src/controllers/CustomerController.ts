@@ -13,7 +13,7 @@ export default class CustomerController {
       password,
     });
     res.json({
-        id: customer.id
+      id: customer.id,
     });
   }
 }
