@@ -33,9 +33,10 @@ export class CustomerRepository {
       password: string;
     }>,
   ): Promise<Customer> {
-    const updateData = data.password === undefined
-      ? data
-      : { ...data, password: await hash(data.password, 12) };
+    const updateData =
+      data.password === undefined
+        ? data
+        : { ...data, password: await hash(data.password, 12) };
 
     return prisma.customer.update({ where: { id }, data: updateData });
   }
