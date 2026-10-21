@@ -43,8 +43,8 @@ prisma migrate diff [options]
 Compare current production DB to your local schema:
 
 ```bash
-prisma migrate diff \
-  --from-url "$PROD_DB_URL" \
+DATABASE_URL="$PROD_DB_URL" prisma migrate diff \
+  --from-config-datasource \
   --to-schema ./prisma/schema.prisma \
   --script
 ```
