@@ -59,7 +59,7 @@ To apply migrations in production, run:
 
 ## Exit Codes
 
-- `0`: Success (may have pending migrations, but command ran successfully)
-- `1`: Error
+- `0`: Database is up to date
+- `1`: Pending or failed migrations, missing migration history, connection failures, or another error
 
-To check for pending migrations programmatically, you might need to parse the output or use `migrate diff` with exit code flags.
+Use the exit status to detect migration-state issues, and inspect the output to distinguish pending migrations from failures.
