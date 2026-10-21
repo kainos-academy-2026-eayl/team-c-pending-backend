@@ -33,7 +33,7 @@ prisma migrate diff [options]
 - `--from-empty`, `--to-empty`
 - `--from-schema <path>`, `--to-schema <path>`
 - `--from-migrations <path>`, `--to-migrations <path>`
-- `--from-url <url>`, `--to-url <url>`
+- Use `--config <path>` to select the configuration supplying a database connection.
 - `--from-config-datasource`, `--to-config-datasource` (uses `prisma.config.ts`)
 
 ## Examples
