@@ -1,3 +1,4 @@
+import { hash } from 'bcryptjs';
 import type { Customer } from '../generated/prisma/client';
 import prisma from '../prismaClient';
 
@@ -23,7 +24,7 @@ export class CustomerRepository {
     return prisma.customer.create({ data });
   }
 
-  update(
+  async update(
     id: number,
     data: Partial<{
       firstname: string;
@@ -32,7 +33,11 @@ export class CustomerRepository {
       password: string;
     }>,
   ): Promise<Customer> {
-    return prisma.customer.update({ where: { id }, data });
+    const updateData = data.password === undefined
+      ? data
+      : { ...data, password: await hash(data.password, 12) };
+
+    return prisma.customer.update({ where: { id }, data: updateData });
   }
 
   delete(id: number): Promise<Customer> {
