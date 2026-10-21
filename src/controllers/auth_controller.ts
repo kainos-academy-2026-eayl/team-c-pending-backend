@@ -3,9 +3,9 @@ import express, { type Express, type Request, type Response } from 'express';
 import { z } from 'zod';
 import type { AuthService } from '../services/auth_service';
 
-const router = Router();
+const authRouter = Router();
 
-router.post('/login', (req: Request, res: Response) => {
+authRouter.post('/login', async (req: Request, res: Response) => {
 
   const loginSchema = z.object({
     email: z.email(),
@@ -22,7 +22,7 @@ router.post('/login', (req: Request, res: Response) => {
   }
 
   const authService = req.app.locals.authService as AuthService;
-  const token = authService.login(
+  const token = await authService.login(
     result.data.email,
     result.data.password,
   );
@@ -41,4 +41,4 @@ router.post('/login', (req: Request, res: Response) => {
   });
 });
 
-export default router;
+export default authRouter;

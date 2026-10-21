@@ -6,14 +6,14 @@ export class AuthService {
   constructor(
     private customerRepository: CustomerRepository,
     private jwtSecret: string,
-  ) {}
+  ) { }
 
   async login(email: string, password: string): Promise<string | null> {
     const customer = await (
       this.customerRepository as CustomerRepository & {
         findByEmail(
           email: string,
-        ): Promise<{ id: string | number; password: string } | null>;
+        ): Promise<{ id: string | number; password: string; } | null>;
       }
     ).findByEmail(email);
 

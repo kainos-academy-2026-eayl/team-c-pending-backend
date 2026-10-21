@@ -6,6 +6,10 @@ export class CustomerRepository {
     return prisma.customer.findMany();
   }
 
+  findByEmail(email: string): Promise<Customer | null> {
+    return prisma.customer.findUnique({ where: { email } });
+  }
+
   findById(id: number): Promise<Customer | null> {
     return prisma.customer.findUnique({ where: { id } });
   }
