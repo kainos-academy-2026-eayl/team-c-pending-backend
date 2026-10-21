@@ -113,6 +113,22 @@ test('GET /me rejects a token for a deleted customer', async () => {
   });
 });
 
+test('unexpected JWT verification errors are not treated as invalid credentials', async () => {
+  const error = new Error('Unexpected verification failure');
+  const repository = { findById: vi.fn() };
+  const service = new AuthService(repository, secret);
+  const verify = vi.spyOn(jwt, 'verify').mockImplementationOnce(() => {
+    throw error;
+  });
+
+  try {
+    await expect(service.getCustomerNameFromToken('token')).rejects.toBe(error);
+    expect(repository.findById).not.toHaveBeenCalled();
+  } finally {
+    verify.mockRestore();
+  }
+});
+
 test('database errors are not treated as invalid credentials', async () => {
   const error = new Error('Database unavailable');
   const repository = { findById: vi.fn().mockRejectedValue(error) };
