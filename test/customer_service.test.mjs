@@ -1,3 +1,4 @@
+import { compare, getRounds } from 'bcryptjs';
 import { expect, test, vi } from 'vitest';
 
 vi.mock('../src/prismaClient.ts', () => ({
@@ -46,6 +47,17 @@ test('customer repository delegates all operations to Prisma', async () => {
   await expect(
     repository.update(customer.id, { firstname: 'Updated' }),
   ).resolves.toBe(customer);
+  await expect(
+    repository.update(customer.id, { password: 'updated-password' }),
+  ).resolves.toBe(customer);
+  expect(prisma.customer.update).toHaveBeenLastCalledWith({
+    where: { id: customer.id },
+    data: { password: expect.any(String) },
+  });
+  const storedPassword = prisma.customer.update.mock.lastCall[0].data.password;
+  expect(storedPassword).not.toBe('updated-password');
+  await expect(compare('updated-password', storedPassword)).resolves.toBe(true);
+  expect(getRounds(storedPassword)).toBe(12);
   await expect(repository.delete(customer.id)).resolves.toBe(customer);
 });
 
@@ -70,7 +82,14 @@ test('customer service delegates its operations to the repository', async () => 
 
   expect(repository.findMany).toHaveBeenCalledOnce();
   expect(repository.findById).toHaveBeenCalledExactlyOnceWith(customer.id);
-  expect(repository.create).toHaveBeenCalledExactlyOnceWith(data);
+  expect(repository.create).toHaveBeenCalledExactlyOnceWith({
+    ...data,
+    password: expect.any(String),
+  });
+  const storedPassword = repository.create.mock.calls[0][0].password;
+  expect(storedPassword).not.toBe(data.password);
+  await expect(compare(data.password, storedPassword)).resolves.toBe(true);
+  expect(getRounds(storedPassword)).toBe(12);
 });
 
 test('customer controller looks up a customer by email', async () => {
