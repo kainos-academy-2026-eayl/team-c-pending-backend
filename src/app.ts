@@ -1,7 +1,7 @@
-import express, { type Express, type Request, type Response } from 'express';
+import express, { type Express } from 'express';
 import 'dotenv/config';
-import utilityRouter from './controllers/utility_controller';
 import authRouter from './controllers/auth_controller';
+import utilityRouter from './controllers/utility_controller';
 import { CustomerRepository } from './prisma_repo/customer_repository';
 import { AuthService } from './services/auth_service';
 
@@ -11,7 +11,10 @@ export function createApp(): Express {
   app.use(express.json({ limit: '100kb' }));
 
   const customerRepository = new CustomerRepository();
-  const authService = new AuthService(customerRepository, process.env.JWT_SECRET ?? '');
+  const authService = new AuthService(
+    customerRepository,
+    process.env.JWT_SECRET ?? '',
+  );
   app.locals.authService = authService;
 
   app.use('/', authRouter);
