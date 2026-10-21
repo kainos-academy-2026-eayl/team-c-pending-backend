@@ -9,20 +9,20 @@ export class CustomerController {
   async getAll(res: Response): Promise<void> {
     const customers = await this.customerService.findAll();
     res.json(
-      customers.map(({ id, firstname, lastname, email }) => ({
+      customers.map(({ id, firstName, lastName, email }) => ({
         id,
-        firstname,
-        lastname,
+        firstName,
+        lastName,
         email,
       })),
     );
   }
 
   async create(req: Request, res: Response): Promise<void> {
-    const { firstname, lastname, email, password } = req.body;
+    const { firstName, lastName, email, password } = req.body;
     const _customer = await this.customerService.create({
-      firstname,
-      lastname,
+      firstName,
+      lastName,
       email,
       password,
     });

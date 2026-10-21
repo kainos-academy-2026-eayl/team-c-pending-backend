@@ -25,8 +25,8 @@ async function withServer(customerService, run) {
 test('GET /customers returns only public customer fields', async () => {
   const customer = {
     id: 1,
-    firstname: 'Test',
-    lastname: 'Customer',
+    firstName: 'Test',
+    lastName: 'Customer',
     email: 'test@example.com',
     password: 'stored-password-hash',
   };
@@ -39,8 +39,8 @@ test('GET /customers returns only public customer fields', async () => {
     expect(await response.json()).toEqual([
       {
         id: 1,
-        firstname: 'Test',
-        lastname: 'Customer',
+        firstName: 'Test',
+        lastName: 'Customer',
         email: 'test@example.com',
       },
     ]);
@@ -50,8 +50,8 @@ test('GET /customers returns only public customer fields', async () => {
 
 test('POST /customers preserves the existing creation response', async () => {
   const data = {
-    firstname: 'Test',
-    lastname: 'Customer',
+    firstName: 'Test',
+    lastName: 'Customer',
     email: 'test@example.com',
     password: 'submitted-password',
   };
