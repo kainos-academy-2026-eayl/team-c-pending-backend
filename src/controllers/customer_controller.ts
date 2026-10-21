@@ -1,14 +1,21 @@
-import type { Request, Response } from 'express';
+import { type Request, type Response, Router } from 'express';
 import type { Customer } from '../generated/prisma/browser';
 import prisma from '../prismaClient';
 import type { CustomerService } from '../services/customer_service';
 
 export class CustomerController {
-  constructor(private customerService: CustomerService) {}
+  constructor(private customerService: CustomerService) { }
 
   async getAll(res: Response): Promise<void> {
     const customers = await this.customerService.findAll();
-    res.json(customers);
+    res.json(
+      customers.map(({ id, firstname, lastname, email }) => ({
+        id,
+        firstname,
+        lastname,
+        email,
+      })),
+    );
   }
 
   async create(req: Request, res: Response): Promise<void> {
@@ -26,4 +33,14 @@ export class CustomerController {
       where: { email },
     });
   }
+}
+
+export function createCustomerRouter(customerService: CustomerService): Router {
+  const router = Router();
+  const controller = new CustomerController(customerService);
+
+  router.get('/', (_req, res) => controller.getAll(res));
+  router.post('/', (req, res) => controller.create(req, res));
+
+  return router;
 }

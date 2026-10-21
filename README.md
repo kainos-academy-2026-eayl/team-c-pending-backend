@@ -151,6 +151,18 @@ npm run build
 
 If your route reads a JSON request body, add `app.use(express.json({ limit: '100kb' }))` in `createApp()` before your routes.
 
+### Customer routes
+
+[src/controllers/customer_controller.ts](src/controllers/customer_controller.ts) exports
+`createCustomerRouter(customerService)`, mounted at `/customers` in
+[src/app.ts](src/app.ts). The controller is created once per router, not per request.
+
+- `GET /customers` returns customer IDs, first names, last names, and emails, never passwords.
+- `POST /customers` delegates to the existing customer creation handler.
+
+These routes currently have no authentication or authorization middleware. Restrict
+access to the customer listing before exposing customer data publicly.
+
 ## Configuration
 
 Environment variables are loaded from `.env` by [dotenv](https://github.com/motdotla/dotenv) at startup.
