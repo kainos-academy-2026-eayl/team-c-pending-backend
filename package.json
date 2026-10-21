@@ -19,7 +19,7 @@
     "lint": "biome check .",
     "lint:fix": "biome check --write .",
     "prepare": "husky",
-    "postinstall": "prisma skills sync || exit 0"
+    "postinstall": "prisma generate && (prisma skills sync || exit 0)"
   },
   "keywords": [],
   "author": "",
