@@ -8,6 +8,8 @@ export function createApp(): Express {
 
   app.use(express.json());
 
+  app.use(express.static("public"));
+
   app.get('/health', (_req: Request, res: Response) => {
     res.json({ status: 'UP', time: new Date().toISOString() });
   });

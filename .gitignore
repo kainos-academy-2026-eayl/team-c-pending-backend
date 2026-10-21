@@ -6,5 +6,6 @@ test-results/
 playwright-report/
 .env.*
 !.env.example
+public/
 
 /src/generated/prisma
