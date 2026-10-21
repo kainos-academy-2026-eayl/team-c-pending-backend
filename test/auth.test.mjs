@@ -7,7 +7,7 @@ vi.mock('jsonwebtoken', () => ({ default: { sign: vi.fn() } }));
 
 import { compare } from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import authRouter from '../src/controllers/auth_controller.ts';
+import authRouter from '../src/controllers/login_controller.ts';
 import { AuthService } from '../src/services/auth_service.ts';
 
 async function withAuthServer(authService, run) {

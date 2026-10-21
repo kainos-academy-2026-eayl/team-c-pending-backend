@@ -2,7 +2,7 @@ import { once } from 'node:events';
 import express from 'express';
 import jwt from 'jsonwebtoken';
 import { expect, test, vi } from 'vitest';
-import authRouter from '../src/controllers/auth_controller.ts';
+import authRouter from '../src/controllers/login_controller.ts';
 import { AuthService } from '../src/services/auth_service.ts';
 
 const secret = 'test-only-secret';
