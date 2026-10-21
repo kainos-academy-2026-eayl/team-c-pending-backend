@@ -14,8 +14,8 @@ export class CustomerService {
   }
 
   async create(data: {
-    firstname: string;
-    lastname: string;
+    firstName: string;
+    lastName: string;
     email: string;
     password: string;
   }): Promise<Customer> {

@@ -16,8 +16,8 @@ export class CustomerRepository {
   }
 
   create(data: {
-    firstname: string;
-    lastname: string;
+    firstName: string;
+    lastName: string;
     email: string;
     password: string;
   }): Promise<Customer> {
@@ -27,8 +27,8 @@ export class CustomerRepository {
   async update(
     id: number,
     data: Partial<{
-      firstname: string;
-      lastname: string;
+      firstName: string;
+      lastName: string;
       email: string;
       password: string;
     }>,

@@ -33,7 +33,7 @@ prisma migrate diff [options]
 - `--from-empty`, `--to-empty`
 - `--from-schema <path>`, `--to-schema <path>`
 - `--from-migrations <path>`, `--to-migrations <path>`
-- `--from-url <url>`, `--to-url <url>`
+- Use `--config <path>` to select the configuration supplying a database connection.
 - `--from-config-datasource`, `--to-config-datasource` (uses `prisma.config.ts`)
 
 ## Examples
@@ -43,8 +43,8 @@ prisma migrate diff [options]
 Compare current production DB to your local schema:
 
 ```bash
-prisma migrate diff \
-  --from-url "$PROD_DB_URL" \
+DATABASE_URL="$PROD_DB_URL" prisma migrate diff \
+  --from-config-datasource \
   --to-schema ./prisma/schema.prisma \
   --script
 ```
