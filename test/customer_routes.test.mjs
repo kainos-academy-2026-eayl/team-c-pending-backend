@@ -2,25 +2,9 @@ import { once } from 'node:events';
 import express from 'express';
 import { expect, test, vi } from 'vitest';
 import { createCustomerRouter } from '../src/controllers/customer_controller.ts';
+import { createApp } from '../src/app.ts';
 
-async function withServer(customerService, run) {
-  const app = express();
-  app.use(express.json());
-  app.use('/customers', createCustomerRouter(customerService));
-  app.use((error, _req, res, _next) => {
-    res.status(500).json({ error: error.message });
-  });
-  const server = app.listen(0, '127.0.0.1');
-
-  try {
-    await once(server, 'listening');
-    await run(`http://127.0.0.1:${server.address().port}`);
-  } finally {
-    await new Promise((resolve, reject) => {
-      server.close((error) => (error ? reject(error) : resolve()));
-    });
-  }
-}
+const app = createApp();
 
 test('GET /customers returns only public customer fields', async () => {
   const customer = {
@@ -32,7 +16,7 @@ test('GET /customers returns only public customer fields', async () => {
   };
   const service = { findAll: vi.fn().mockResolvedValue([customer]) };
 
-  await withServer(service, async (url) => {
+  await createApp(service, async (url) => {
     const response = await fetch(`${url}/customers`);
 
     expect(response.status).toBe(200);
@@ -57,7 +41,7 @@ test('POST /customers preserves the existing creation response', async () => {
   };
   const service = { create: vi.fn().mockResolvedValue({ id: 1, ...data }) };
 
-  await withServer(service, async (url) => {
+  await createApp(service, async (url) => {
     const response = await fetch(`${url}/customers`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -79,19 +63,19 @@ test.each(['GET', 'POST'])(
       create: vi.fn().mockRejectedValue(error),
     };
 
-    await withServer(service, async (url) => {
+    await createApp(service, async (url) => {
       const response = await fetch(`${url}/customers`, {
         method,
         ...(method === 'POST'
           ? {
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                firstname: 'Test',
-                lastname: 'Customer',
-                email: 'test@example.com',
-                password: 'submitted-password',
-              }),
-            }
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              firstname: 'Test',
+              lastname: 'Customer',
+              email: 'test@example.com',
+              password: 'submitted-password',
+            }),
+          }
           : {}),
       });
 
