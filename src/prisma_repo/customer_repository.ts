@@ -43,7 +43,7 @@ export class CustomerRepository {
 
     return prisma.customer.update({ where: { id }, data: updateData });
   }
-  // deletes customer from database 
+  // deletes customer from database
   delete(id: number): Promise<Customer> {
     return prisma.customer.delete({ where: { id } });
   }

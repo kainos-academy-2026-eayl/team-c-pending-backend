@@ -1,6 +1,7 @@
 import { type Request, type Response, Router } from 'express';
 import { z } from 'zod';
 import type { AuthService } from '../services/auth_service';
+
 //authRouter checks for valid endpoints with customer login and authentication
 const authRouter = Router();
 

@@ -6,11 +6,11 @@ export class AuthService {
   constructor(
     private customerRepository: CustomerRepository,
     private jwtSecret: string,
-  ) { }
+  ) {}
   // Gets the customer's first and last name from the JWT token
   async getCustomerNameFromToken(
     token: string,
-  ): Promise<{ firstName: string; lastName: string; } | null> {
+  ): Promise<{ firstName: string; lastName: string } | null> {
     let payload: string | jwt.JwtPayload;
     //catching the token errors in case of any issues
     try {
@@ -34,7 +34,7 @@ export class AuthService {
     if (!Number.isSafeInteger(customerId)) {
       return null;
     }
-    // Calling the customer using the findById method 
+    // Calling the customer using the findById method
     const customer = await this.customerRepository.findById(customerId);
     if (!customer) {
       return null;
@@ -49,7 +49,7 @@ export class AuthService {
         //finds the customer by their email so we can check their password is right
         findByEmail(
           email: string,
-        ): Promise<{ id: string | number; password: string; } | null>;
+        ): Promise<{ id: string | number; password: string } | null>;
       }
     ).findByEmail(email);
 
