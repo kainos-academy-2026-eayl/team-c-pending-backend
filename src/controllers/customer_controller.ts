@@ -4,7 +4,7 @@ import prisma from '../prismaClient';
 import type { CustomerService } from '../services/customer_service';
 
 export class CustomerController {
-  constructor(private customerService: CustomerService) { }
+  constructor(private customerService: CustomerService) {}
 
   async getAll(res: Response): Promise<void> {
     const customers = await this.customerService.findAll();
