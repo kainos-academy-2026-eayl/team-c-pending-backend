@@ -3,8 +3,9 @@ import type { Customer } from '../generated/prisma/browser';
 import prisma from '../prismaClient';
 import type { CustomerService } from '../services/customer_service';
 
+// this basically creates a controller for customer projects and what a customer as a class should look like
 export class CustomerController {
-  constructor(private customerService: CustomerService) {}
+  constructor(private customerService: CustomerService) { }
 
   async getAll(res: Response): Promise<void> {
     const customers = await this.customerService.findAll();

@@ -45,6 +45,28 @@ curl http://localhost:3000/health
 
 Use `npm ci` rather than `npm install`. It installs the exact versions recorded in `package-lock.json`, so everyone on the team runs identical dependencies. Use `npm install` only when you are deliberately adding or upgrading a package.
 
+## Current customer name
+
+After signing in with `POST /login`, send the returned `accessToken` to
+`GET /me` in the `Authorization` header:
+
+```sh
+curl http://localhost:3000/me \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
+```
+
+The API verifies the token's signature and expiry, then uses its `sub` customer ID
+to look up the customer's current name. A successful response contains only:
+
+```json
+{ "firstName": "Alex", "lastName": "Smith" }
+```
+
+Missing, invalid, or expired tokens, and tokens for customers that no longer
+exist, receive `401 Unauthorized`. Set a strong, non-empty `JWT_SECRET` on the
+backend, matching the secret used to issue login tokens. Never expose it to the
+frontend.
+
 ## Making it your own
 
 After clicking **Use this template** on GitHub and creating your own repository:
