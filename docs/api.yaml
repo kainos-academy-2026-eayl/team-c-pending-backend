@@ -1,0 +1,105 @@
+openapi: 3.0.0
+info:
+  title: Ecommerce Team C
+  version: 1.0.0
+  description: ""
+servers: []
+paths:
+  /account:
+    post:
+      operationId: postAccount
+      responses:
+        "200":
+          description: Response for status 200
+          content:
+            application/json:
+              schema:
+                type: integer
+        "409":
+          description: Response for status 409
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/newAccount"
+  /products:
+    get:
+      operationId: listProducts
+      responses:
+        "200":
+          description: Response for status 200
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/product"
+      parameters:
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: category
+          in: query
+          required: false
+          schema:
+            type: string
+  /account/login:
+    post:
+      operationId: login
+      responses:
+        "200":
+          description: Response for status 200
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/login"
+components:
+  schemas:
+    newAccount:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        firstName:
+          type: string
+        lastName:
+          type: string
+        password:
+          type: string
+      required:
+        - email
+        - firstName
+        - lastName
+        - password
+    product:
+      type: object
+      properties:
+        name:
+          type: string
+        price:
+          type: number
+        description:
+          type: string
+        category:
+          type: string
+      required:
+        - name
+        - price
+        - description
+        - category
+    login:
+      type: object
+      properties:
+        email:
+          type: string
+        password:
+          type: string
+      required:
+        - email
+        - password
+  securitySchemes: {}
+security: []
