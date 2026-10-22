@@ -20,3 +20,14 @@ model Customer {
   email     String @unique
   password  String
 }
+
+model Product {
+  id          Int     @id @default(autoincrement())
+  name        String
+  price       Float
+  description String
+  category    String
+  quantity    Int
+  stock       Boolean
+  image       String?
+}
