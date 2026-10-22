@@ -7,6 +7,9 @@ import { CustomerRepository } from './prisma_repo/customer_repository';
 import { ProductRepository } from './prisma_repo/product_repository';
 import { AuthService } from './services/auth_service';
 import { ProductService } from './services/product_service';
+import BasketService from './services/basket_service';
+import BasketRepository from './prisma_repo/basket_repository';
+import prisma from './prismaClient';
 
 export function createApp(): Express {
   const app = express();
@@ -22,6 +25,7 @@ export function createApp(): Express {
   const productService = new ProductService(productRepository);
 
   app.locals.authService = authService;
+  app.locals.basketService = new BasketService(new BasketRepository(prisma));
   // login router
   app.use('/', authRouter);
   app.use(

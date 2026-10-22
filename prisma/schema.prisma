@@ -14,20 +14,32 @@ datasource db {
 
 //npx prisma migrate dev --name add-post-slug :Do this everytime you update this pls
 model Customer {
-  id        Int    @id @default(autoincrement())
-  firstName String
-  lastName  String
-  email     String @unique
-  password  String
+  id            Int           @id @default(autoincrement())
+  firstName     String
+  lastName      String
+  email         String        @unique
+  password      String
+  basketEntries BasketEntry[]
 }
 
 model Product {
-  id          Int     @id @default(autoincrement())
-  name        String
-  price       Float
-  description String
-  category    String
-  quantity    Int
-  stock       Boolean
-  image       String?
+  id            Int           @id @default(autoincrement())
+  name          String
+  price         Float
+  description   String
+  category      String
+  quantity      Int
+  stock         Boolean
+  image         String?
+  basketEntries BasketEntry[]
+}
+
+model BasketEntry {
+  customerId Int
+  productId  Int
+  quantity   Int
+  customer   Customer @relation(fields: [customerId], references: [id])
+  product    Product  @relation(fields: [productId], references: [id])
+
+  @@id([customerId, productId])
 }
