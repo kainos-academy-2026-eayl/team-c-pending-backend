@@ -53,25 +53,28 @@ test('basket controller updates quantity for the authenticated customer', async 
 test.each([
   ['non-numeric', 'not-a-number'],
   ['unsafe integer', '9007199254740992'],
-])('basket controller rejects a %s product ID', async (_description, productId) => {
-  const authService = { getCustomerIdFromToken: vi.fn() };
-  const basketService = { updateQuantity: vi.fn() };
+])(
+  'basket controller rejects a %s product ID',
+  async (_description, productId) => {
+    const authService = { getCustomerIdFromToken: vi.fn() };
+    const basketService = { updateQuantity: vi.fn() };
 
-  await withServer(authService, basketService, async (url) => {
-    const response = await fetch(`${url}/basket/${productId}`, {
-      method: 'POST',
-      headers: {
-        Authorization: 'Bearer valid-token',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ quantity: 3 }),
+    await withServer(authService, basketService, async (url) => {
+      const response = await fetch(`${url}/basket/${productId}`, {
+        method: 'POST',
+        headers: {
+          Authorization: 'Bearer valid-token',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ quantity: 3 }),
+      });
+
+      expect(response.status).toBe(400);
+      expect(authService.getCustomerIdFromToken).not.toHaveBeenCalled();
+      expect(basketService.updateQuantity).not.toHaveBeenCalled();
     });
-
-    expect(response.status).toBe(400);
-    expect(authService.getCustomerIdFromToken).not.toHaveBeenCalled();
-    expect(basketService.updateQuantity).not.toHaveBeenCalled();
-  });
-});
+  },
+);
 
 test('basket controller rejects requests without a bearer token', async () => {
   const authService = { getCustomerIdFromToken: vi.fn() };
