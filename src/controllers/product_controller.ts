@@ -21,14 +21,14 @@ interface ProductService {
 
 // this basically creates a controller for product projects and what a product as a class should look like
 export class ProductController {
-  constructor(private productService: ProductService) { }
+  constructor(private productService: ProductService) {}
 
   async getCategories(res: Response): Promise<void> {
     const categories = await prisma.product.findMany({
       distinct: ['category'],
       select: { category: true },
     });
-    res.json(categories.map(c => c.category));
+    res.json(categories.map((c) => c.category));
   }
 
   async getAll(res: Response): Promise<void> {
@@ -98,12 +98,12 @@ export class ProductController {
       image,
     });
     res.json('All okay');
-  };
+  }
   findById(id: number): Promise<Product | null> {
     return prisma.product.findUnique({
       where: { id },
     });
-  };
+  }
 }
 
 export function createProductRouter(productService: ProductService): Router {
