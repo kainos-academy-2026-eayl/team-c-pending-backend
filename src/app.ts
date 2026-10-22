@@ -24,7 +24,10 @@ export function createApp(): Express {
   app.locals.authService = authService;
   // login router
   app.use('/', authRouter);
-  app.use('/products', createProductRouter(new ProductService(new ProductRepository)))
+  app.use(
+    '/products',
+    createProductRouter(new ProductService(new ProductRepository())),
+  );
   //health check router
   app.use('/', utilityRouter);
   app.use(
