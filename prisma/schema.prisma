@@ -15,8 +15,8 @@ datasource db {
 //npx prisma migrate dev --name add-post-slug :Do this everytime you update this pls
 model Customer {
   id        Int    @id @default(autoincrement())
-  firstName String
-  lastName  String
+  firstName String @map("firstname")
+  lastName  String @map("lastname")
   email     String @unique
   password  String
 }
