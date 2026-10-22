@@ -31,7 +31,6 @@ test('GET /products returns the public product fields', async () => {
     description: 'Adjustable task light',
     category: 'lighting',
     quantity: 8,
-    stock: true,
     image: 'https://example.com/lamp.png',
     internalNote: 'not public',
   };
@@ -49,7 +48,6 @@ test('GET /products returns the public product fields', async () => {
         description: 'Adjustable task light',
         category: 'lighting',
         quantity: 8,
-        stock: true,
         image: 'https://example.com/lamp.png',
       },
     ]);
@@ -65,7 +63,6 @@ test('GET /products/category forwards the category and returns products', async 
     description: 'Adjustable task light',
     category: 'lighting',
     quantity: 8,
-    stock: true,
     image: 'https://example.com/lamp.png',
   };
   const service = {
@@ -88,7 +85,6 @@ test('POST /products forwards product data to the service', async () => {
     description: 'Adjustable task light',
     category: 'lighting',
     quantity: 8,
-    stock: true,
     image: 'https://example.com/lamp.png',
   };
   const service = { create: vi.fn().mockResolvedValue({ id: 1, ...data }) };

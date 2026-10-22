@@ -8,42 +8,26 @@ interface ProductService {
   create(
     data: Pick<
       Product,
-      | 'name'
-      | 'price'
-      | 'description'
-      | 'category'
-      | 'quantity'
-      | 'stock'
-      | 'image'
+      'name' | 'price' | 'description' | 'category' | 'quantity' | 'image'
     >,
   ): Promise<Product>;
 }
 
 // this basically creates a controller for product projects and what a product as a class should look like
 export class ProductController {
-  constructor(private productService: ProductService) {}
+  constructor(private productService: ProductService) { }
 
   async getAll(res: Response): Promise<void> {
     const products = await this.productService.findAll();
     res.json(
       products.map(
-        ({
+        ({ id, name, price, description, category, quantity, image }) => ({
           id,
           name,
           price,
           description,
           category,
           quantity,
-          stock,
-          image,
-        }) => ({
-          id,
-          name,
-          price,
-          description,
-          category,
-          quantity,
-          stock,
           image,
         }),
       ),
@@ -55,38 +39,34 @@ export class ProductController {
     );
     res.json(
       products.map(
-        ({
+        ({ id, name, price, description, category, quantity, image }) => ({
           id,
           name,
           price,
           description,
           category,
           quantity,
-          stock,
-          image,
-        }) => ({
-          id,
-          name,
-          price,
-          description,
-          category,
-          quantity,
-          stock,
           image,
         }),
       ),
     );
   }
+
+  async getIsInStock(req: Request, res: Response): Promise<void> {
+    const id = Number(req.params.id);
+    const product = await this.findById(id);
+    const stockAmount = product ? product.quantity : 0;
+    res.json({ inStock: stockAmount > 0 });
+  }
+
   async create(req: Request, res: Response): Promise<void> {
-    const { name, price, description, category, quantity, stock, image } =
-      req.body;
+    const { name, price, description, category, quantity, image } = req.body;
     const _product = await this.productService.create({
       name,
       price,
       description,
       category,
       quantity,
-      stock,
       image,
     });
     res.json('All okay');
@@ -105,6 +85,7 @@ export function createProductRouter(productService: ProductService): Router {
   router.get('/', (_req, res) => controller.getAll(res));
   router.get('/category', (req, res) => controller.getByCategory(req, res));
   router.post('/', (req, res) => controller.create(req, res));
+  router.get('/:id/in-stock', (req, res) => controller.getIsInStock(req, res));
 
   return router;
 }

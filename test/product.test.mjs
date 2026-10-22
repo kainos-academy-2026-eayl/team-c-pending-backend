@@ -24,7 +24,6 @@ test('product repository delegates all operations to Prisma', async () => {
     description: 'Adjustable task light',
     category: 'lighting',
     quantity: 8,
-    stock: true,
     image: 'https://example.com/lamp.png',
   };
   const product = { id: 1, ...data };
@@ -96,7 +95,6 @@ test('product service delegates its operations to the repository', async () => {
     description: 'Adjustable task light',
     category: 'lighting',
     quantity: 8,
-    stock: true,
     image: 'https://example.com/lamp.png',
   };
   await expect(service.create(data)).resolves.toBe(product);

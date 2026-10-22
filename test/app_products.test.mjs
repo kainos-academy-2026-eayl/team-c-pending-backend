@@ -13,7 +13,6 @@ vi.mock('../src/prisma_repo/product_repository.ts', () => ({
           description: 'Adjustable task light',
           category: 'lighting',
           quantity: 8,
-          stock: true,
           image: 'https://example.com/lamp.png',
         },
       ]);
@@ -40,7 +39,6 @@ test('createApp mounts the product router at /products', async () => {
         description: 'Adjustable task light',
         category: 'lighting',
         quantity: 8,
-        stock: true,
         image: 'https://example.com/lamp.png',
       },
     ]);

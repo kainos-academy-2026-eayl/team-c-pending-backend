@@ -22,7 +22,6 @@ export class ProductRepository {
     description: string;
     category: string;
     quantity: number;
-    stock: boolean;
     image: string | null;
   }): Promise<Product> {
     return prisma.product.create({ data });
@@ -37,7 +36,6 @@ export class ProductRepository {
       description: string;
       category: string;
       quantity: number;
-      stock: boolean;
       image?: string;
     }>,
     // hashes passsword being updated
