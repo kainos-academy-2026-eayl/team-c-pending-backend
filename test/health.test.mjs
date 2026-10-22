@@ -1,7 +1,23 @@
 import { once } from 'node:events';
-import { expect, test } from 'vitest';
+import { afterEach, expect, test, vi } from 'vitest';
 import { createApp } from '../src/app.ts';
 import 'dotenv/config';
+
+afterEach(() => {
+  vi.unstubAllEnvs();
+});
+
+test.each([
+  ['set', 'coverage-secret'],
+  ['unset', undefined],
+])('createApp initializes services with JWT_SECRET %s', (_state, secret) => {
+  vi.stubEnv('JWT_SECRET', secret);
+
+  const app = createApp();
+
+  expect(app.locals.customerService).toBeDefined();
+  expect(app.locals.loginService).toBeDefined();
+});
 
 test('GET /health returns UP and the current ISO timestamp', async () => {
   const server = createApp().listen(0, '127.0.0.1');
