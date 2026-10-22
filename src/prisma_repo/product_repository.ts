@@ -22,8 +22,8 @@ export class ProductRepository {
     description: string;
     category: string;
     quantity: number;
-    stock: true;
-    image?: string;
+    stock: boolean;
+    image: string | null;
   }): Promise<Product> {
     return prisma.product.create({ data });
   }
