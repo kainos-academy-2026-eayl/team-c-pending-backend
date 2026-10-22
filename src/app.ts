@@ -1,9 +1,12 @@
 import express, { type Express } from 'express';
 import 'dotenv/config';
 import utilityRouter from './controllers/health_controller';
-import authRouter from './controllers/login_controller';
+import loginRouter from './controllers/login_controller';
+import registrationRouter from './controllers/registration_controller';
 import { CustomerRepository } from './prisma_repo/customer_repository';
-import { AuthService } from './services/auth_service';
+import { CustomerService } from './services/customer_service';
+import { LoginService } from './services/login_service';
+// import { Nunjucks } from 'nunjucks';
 
 export function createApp(): Express {
   const app = express();
@@ -11,15 +14,16 @@ export function createApp(): Express {
   app.use(express.json({ limit: '100kb' }));
   // initialize repositories and services
   const customerRepository = new CustomerRepository();
-  const authService = new AuthService(
+  const customerService = new CustomerService(customerRepository);
+  const loginService = new LoginService(
     customerRepository,
     process.env.JWT_SECRET ?? '',
   );
+  app.locals.customerService = customerService;
+  app.locals.loginService = loginService;
 
-  app.locals.authService = authService;
-  // login router
-  app.use('/', authRouter);
-  //health check router
+  app.use('/', registrationRouter);
+  app.use('/', loginRouter);
   app.use('/', utilityRouter);
 
   return app;

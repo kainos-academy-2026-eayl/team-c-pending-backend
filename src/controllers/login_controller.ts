@@ -1,11 +1,10 @@
 import { type Request, type Response, Router } from 'express';
 import { z } from 'zod';
-import type { AuthService } from '../services/auth_service';
+import type { LoginService } from '../services/login_service';
 
-//authRouter checks for valid endpoints with customer login and authentication
-const authRouter = Router();
+const loginRouter = Router();
 
-authRouter.get('/me', async (req: Request, res: Response) => {
+loginRouter.get('/me', async (req: Request, res: Response) => {
   const token = req.get('Authorization')?.match(/^Bearer\s+(\S+)$/i)?.[1];
   //no token is passed
   if (!token) {
@@ -13,8 +12,8 @@ authRouter.get('/me', async (req: Request, res: Response) => {
     return;
   }
 
-  const authService = req.app.locals.authService as AuthService;
-  const customerName = await authService.getCustomerNameFromToken(token);
+  const loginService = req.app.locals.loginService as LoginService;
+  const customerName = await loginService.getCustomerNameFromToken(token);
   // no token or expired check
   if (!customerName) {
     res.status(401).json({ error: 'Invalid or expired token' });
@@ -24,7 +23,7 @@ authRouter.get('/me', async (req: Request, res: Response) => {
   res.status(200).json(customerName);
 });
 
-authRouter.post('/login', async (req: Request, res: Response) => {
+loginRouter.post('/login', async (req: Request, res: Response) => {
   // validating the login itself
   const loginSchema = z.object({
     email: z.email(),
@@ -40,8 +39,8 @@ authRouter.post('/login', async (req: Request, res: Response) => {
     return;
   }
 
-  const authService = req.app.locals.authService as AuthService;
-  const token = await authService.login(
+  const loginService = req.app.locals.loginService as LoginService;
+  const token = await loginService.login(
     result.data.email,
     result.data.password,
   );
@@ -60,4 +59,4 @@ authRouter.post('/login', async (req: Request, res: Response) => {
   });
 });
 
-export default authRouter;
+export default loginRouter;
