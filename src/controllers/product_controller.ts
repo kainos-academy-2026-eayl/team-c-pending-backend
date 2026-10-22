@@ -17,6 +17,14 @@ interface ProductService {
 export class ProductController {
   constructor(private productService: ProductService) { }
 
+  async getCategories(res: Response): Promise<void> {
+    const categories = await prisma.product.findMany({
+      distinct: ['category'],
+      select: { category: true },
+    });
+    res.json(categories.map((c) => c.category));
+  }
+
   async getAll(res: Response): Promise<void> {
     const products = await this.productService.findAll();
     res.json(
@@ -84,6 +92,7 @@ export function createProductRouter(productService: ProductService): Router {
 
   router.get('/', (_req, res) => controller.getAll(res));
   router.get('/category', (req, res) => controller.getByCategory(req, res));
+  router.get('/categories', (_req, res) => controller.getCategories(res));
   router.post('/', (req, res) => controller.create(req, res));
   router.get('/:id/in-stock', (req, res) => controller.getIsInStock(req, res));
 
