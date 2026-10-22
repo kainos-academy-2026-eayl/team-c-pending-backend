@@ -12,11 +12,15 @@ async function withRegistrationServer(customerService, run) {
     issueToken: vi.fn().mockReturnValue('signed-token'),
   };
   app.use(registrationRouter);
+  const errorHandler = vi.fn((_error, _req, res, _next) => {
+    res.status(500).json({ error: 'Internal server error' });
+  });
+  app.use(errorHandler);
   const server = app.listen(0, '127.0.0.1');
 
   try {
     await once(server, 'listening');
-    await run(`http://127.0.0.1:${server.address().port}`);
+    await run(`http://127.0.0.1:${server.address().port}`, errorHandler);
   } finally {
     await new Promise((resolve, reject) => {
       server.close((error) => (error ? reject(error) : resolve()));
@@ -120,3 +124,43 @@ test('registration returns conflict when the email is already registered', async
     });
   });
 });
+
+test.each([
+  ['an unexpected error', new Error('Database unavailable')],
+  [
+    'a non-duplicate Prisma error',
+    new Prisma.PrismaClientKnownRequestError('Operation timed out', {
+      code: 'P2024',
+      clientVersion: '7.10.1',
+    }),
+  ],
+])(
+  'registration forwards %s to error handling',
+  async (_description, error) => {
+    const customerService = {
+      create: vi.fn().mockRejectedValue(error),
+    };
+
+    await withRegistrationServer(customerService, async (url, errorHandler) => {
+      const response = await fetch(`${url}/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          firstName: 'Test',
+          lastName: 'Customer',
+          email: 'test@example.com',
+          password: 'submitted-password',
+        }),
+      });
+
+      expect(response.status).toBe(500);
+      expect(await response.json()).toEqual({ error: 'Internal server error' });
+      expect(errorHandler).toHaveBeenCalledExactlyOnceWith(
+        error,
+        expect.anything(),
+        expect.anything(),
+        expect.any(Function),
+      );
+    });
+  },
+);
