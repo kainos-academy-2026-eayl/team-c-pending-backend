@@ -16,14 +16,18 @@ export class ProductService {
     return this.productRepository.findByCategory(category);
   }
 
-  async create(data: Pick<Product,
-        | 'name'
-        | 'price'
-        | 'description'
-        | 'category'
-        | 'quantity'
-        | 'stock'
-        | 'image'>): Promise<Product> {
+  async create(
+    data: Pick<
+      Product,
+      | 'name'
+      | 'price'
+      | 'description'
+      | 'category'
+      | 'quantity'
+      | 'stock'
+      | 'image'
+    >,
+  ): Promise<Product> {
     return this.productRepository.create({
       ...data,
     });
