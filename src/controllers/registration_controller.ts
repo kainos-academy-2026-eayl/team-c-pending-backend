@@ -10,7 +10,12 @@ const registrationSchema = z.object({
   firstName: z.string().trim().min(1),
   lastName: z.string().trim().min(1),
   email: z.email(),
-  password: z.string().min(1),
+  password: z
+    .string()
+    .min(1)
+    .refine((password) => Buffer.byteLength(password, 'utf8') <= 72, {
+      message: 'Password must be at most 72 UTF-8 bytes',
+    }),
 });
 
 registrationRouter.post('/register', async (req: Request, res: Response) => {
