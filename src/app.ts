@@ -6,7 +6,6 @@ import registrationRouter from './controllers/registration_controller';
 import { CustomerRepository } from './prisma_repo/customer_repository';
 import { CustomerService } from './services/customer_service';
 import { LoginService } from './services/login_service';
-// import { Nunjucks } from 'nunjucks';
 
 export function createApp(): Express {
   const app = express();
