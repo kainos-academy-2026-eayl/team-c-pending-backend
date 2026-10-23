@@ -2,15 +2,15 @@ import { once } from 'node:events';
 import express from 'express';
 import jwt from 'jsonwebtoken';
 import { expect, test, vi } from 'vitest';
-import authRouter from '../src/controllers/login_controller.ts';
-import { AuthService } from '../src/services/auth_service.ts';
+import loginRouter from '../src/controllers/login_controller.ts';
+import { LoginService } from '../src/services/login_service.ts';
 
 const secret = 'test-only-secret';
 
 async function withServer(repository, run) {
   const app = express();
-  app.locals.authService = new AuthService(repository, secret);
-  app.use(authRouter);
+  app.locals.loginService = new LoginService(repository, secret);
+  app.use(loginRouter);
   const server = app.listen(0, '127.0.0.1');
 
   try {
@@ -116,7 +116,7 @@ test('GET /me rejects a token for a deleted customer', async () => {
 test('unexpected JWT verification errors are not treated as invalid credentials', async () => {
   const error = new Error('Unexpected verification failure');
   const repository = { findById: vi.fn() };
-  const service = new AuthService(repository, secret);
+  const service = new LoginService(repository, secret);
   const verify = vi.spyOn(jwt, 'verify').mockImplementationOnce(() => {
     throw error;
   });
@@ -132,7 +132,7 @@ test('unexpected JWT verification errors are not treated as invalid credentials'
 test('database errors are not treated as invalid credentials', async () => {
   const error = new Error('Database unavailable');
   const repository = { findById: vi.fn().mockRejectedValue(error) };
-  const service = new AuthService(repository, secret);
+  const service = new LoginService(repository, secret);
   const token = jwt.sign({}, secret, { subject: '42' });
 
   await expect(service.getCustomerNameFromToken(token)).rejects.toBe(error);

@@ -37,8 +37,7 @@ router.post('/:productId', async (req, res) => {
   res.status(200).json(await basketService.getBasket(customerId));
 });
 
-router.get("/", async (req, res) => {
-
+router.get('/', async (req, res) => {
   const authService = req.app.locals.authService as AuthService;
 
   const token = req.get('Authorization')?.match(/^Bearer\s+(\S+)$/i)?.[1];
@@ -56,6 +55,6 @@ router.get("/", async (req, res) => {
   const basketService = (await req.app.locals.basketService) as BasketService;
 
   res.status(200).json(await basketService.getBasket(customerId));
-})
+});
 
 export default router;

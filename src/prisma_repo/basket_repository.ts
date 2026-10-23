@@ -37,19 +37,17 @@ export default class BasketRepository {
     });
   }
 
-  async getBasket(
-    customerId: number,
-  ) {
+  async getBasket(customerId: number) {
     return this.prisma.basketEntry.findMany({
       where: {
         customerId,
       },
       include: {
-        product: true
+        product: true,
       },
       omit: {
-        customerId: true
-      }
+        customerId: true,
+      },
     });
   }
 }

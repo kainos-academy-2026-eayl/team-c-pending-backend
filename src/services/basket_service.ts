@@ -15,9 +15,7 @@ export default class BasketService {
     );
   }
 
-  async getBasket(
-    customerId: number,
-  ) {
+  async getBasket(customerId: number) {
     return this.basketRepository.getBasket(customerId);
   }
 }

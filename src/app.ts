@@ -1,16 +1,19 @@
 import express, { type Express } from 'express';
 import 'dotenv/config';
+import basketController from './controllers/basket_controller';
 import utilityRouter from './controllers/health_controller';
 import authRouter from './controllers/login_controller';
+import loginRouter from './controllers/login_controller';
 import { createProductRouter } from './controllers/product_controller';
+import registrationRouter from './controllers/registration_controller';
 import BasketRepository from './prisma_repo/basket_repository';
 import { CustomerRepository } from './prisma_repo/customer_repository';
 import { ProductRepository } from './prisma_repo/product_repository';
 import prisma from './prismaClient';
-import { AuthService } from './services/auth_service';
 import BasketService from './services/basket_service';
+import { CustomerService } from './services/customer_service';
+import { LoginService } from './services/login_service';
 import { ProductService } from './services/product_service';
-import basketController from './controllers/basket_controller';
 
 export function createApp(): Express {
   const app = express();
@@ -18,14 +21,15 @@ export function createApp(): Express {
   app.use(express.json({ limit: '100kb' }));
   // initialize repositories and services
   const customerRepository = new CustomerRepository();
-  const authService = new AuthService(
+  const customerService = new CustomerService(customerRepository);
+  const loginService = new LoginService(
     customerRepository,
     process.env.JWT_SECRET ?? '',
   );
   const productRepository = new ProductRepository();
   const productService = new ProductService(productRepository);
 
-  app.locals.authService = authService;
+  app.locals.authService = loginService;
   app.locals.basketService = new BasketService(new BasketRepository(prisma));
   // login router
   app.use('/', authRouter);
@@ -34,6 +38,11 @@ export function createApp(): Express {
     createProductRouter(new ProductService(new ProductRepository())),
   );
   //health check router
+  app.locals.customerService = customerService;
+  app.locals.loginService = loginService;
+
+  app.use('/', registrationRouter);
+  app.use('/', loginRouter);
   app.use('/', utilityRouter);
   app.use(
     '/products',
@@ -41,7 +50,7 @@ export function createApp(): Express {
       productService as unknown as Parameters<typeof createProductRouter>[0],
     ),
   );
-  app.use("/basket", basketController);
+  app.use('/basket', basketController);
 
   return app;
 }
