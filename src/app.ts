@@ -10,6 +10,7 @@ import prisma from './prismaClient';
 import { AuthService } from './services/auth_service';
 import BasketService from './services/basket_service';
 import { ProductService } from './services/product_service';
+import basketController from './controllers/basket_controller';
 
 export function createApp(): Express {
   const app = express();
@@ -40,6 +41,7 @@ export function createApp(): Express {
       productService as unknown as Parameters<typeof createProductRouter>[0],
     ),
   );
+  app.use("/basket", basketController);
 
   return app;
 }

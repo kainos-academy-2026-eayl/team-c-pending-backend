@@ -34,7 +34,28 @@ router.post('/:productId', async (req, res) => {
 
   const basketService = (await req.app.locals.basketService) as BasketService;
   await basketService.updateQuantity(customerId, productId, quantity);
-  res.sendStatus(200);
+  res.status(200).json(await basketService.getBasket(customerId));
 });
+
+router.get("/", async (req, res) => {
+
+  const authService = req.app.locals.authService as AuthService;
+
+  const token = req.get('Authorization')?.match(/^Bearer\s+(\S+)$/i)?.[1];
+  if (!token) {
+    res.status(401).json({ error: 'A Bearer token is required' });
+    return;
+  }
+
+  const customerId = await authService.getCustomerIdFromToken(token);
+  if (!customerId) {
+    res.status(401).json({ error: 'Invalid or expired token' });
+    return;
+  }
+
+  const basketService = (await req.app.locals.basketService) as BasketService;
+
+  res.status(200).json(await basketService.getBasket(customerId));
+})
 
 export default router;

@@ -14,4 +14,10 @@ export default class BasketService {
       quantity,
     );
   }
+
+  async getBasket(
+    customerId: number,
+  ) {
+    return this.basketRepository.getBasket(customerId);
+  }
 }
