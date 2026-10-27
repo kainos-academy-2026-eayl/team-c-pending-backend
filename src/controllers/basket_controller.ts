@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import z from 'zod';
-import type { AuthService } from '../services/auth_service';
+import type { LoginService } from '../services/login_service';
 import type BasketService from '../services/basket_service';
 
 const router = Router();
@@ -18,7 +18,7 @@ router.post('/:productId', async (req, res) => {
     return;
   }
 
-  const authService = req.app.locals.authService as AuthService;
+  const loginService = req.app.locals.loginService as LoginService;
 
   const token = req.get('Authorization')?.match(/^Bearer\s+(\S+)$/i)?.[1];
   if (!token) {
@@ -26,7 +26,7 @@ router.post('/:productId', async (req, res) => {
     return;
   }
 
-  const customerId = await authService.getCustomerIdFromToken(token);
+  const customerId = await loginService.getCustomerIdFromToken(token);
   if (!customerId) {
     res.status(401).json({ error: 'Invalid or expired token' });
     return;
@@ -38,7 +38,7 @@ router.post('/:productId', async (req, res) => {
 });
 
 router.get('/', async (req, res) => {
-  const authService = req.app.locals.authService as AuthService;
+  const authService = req.app.locals.loginService as LoginService;
 
   const token = req.get('Authorization')?.match(/^Bearer\s+(\S+)$/i)?.[1];
   if (!token) {

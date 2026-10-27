@@ -29,7 +29,6 @@ model Product {
   description   String
   category      String
   quantity      Int
-  stock         Boolean
   image         String?
   basketEntries BasketEntry[]
 }

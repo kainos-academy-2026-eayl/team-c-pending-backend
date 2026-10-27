@@ -13,7 +13,6 @@ interface ProductService {
       | 'description'
       | 'category'
       | 'quantity'
-      | 'stock'
       | 'image'
     >,
   ): Promise<Product>;
@@ -42,7 +41,6 @@ export class ProductController {
           description,
           category,
           quantity,
-          stock,
           image,
         }) => ({
           id,
@@ -51,7 +49,6 @@ export class ProductController {
           description,
           category,
           quantity,
-          stock,
           image,
         }),
       ),
@@ -70,7 +67,6 @@ export class ProductController {
           description,
           category,
           quantity,
-          stock,
           image,
         }) => ({
           id,
@@ -79,14 +75,13 @@ export class ProductController {
           description,
           category,
           quantity,
-          stock,
           image,
         }),
       ),
     );
   }
   async create(req: Request, res: Response): Promise<void> {
-    const { name, price, description, category, quantity, stock, image } =
+    const { name, price, description, category, quantity, image } =
       req.body;
     const _product = await this.productService.create({
       name,
@@ -94,7 +89,6 @@ export class ProductController {
       description,
       category,
       quantity,
-      stock,
       image,
     });
     res.json('All okay');
