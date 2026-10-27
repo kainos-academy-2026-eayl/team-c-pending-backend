@@ -2,7 +2,6 @@ import express, { type Express } from 'express';
 import 'dotenv/config';
 import basketController from './controllers/basket_controller';
 import utilityRouter from './controllers/health_controller';
-import authRouter from './controllers/login_controller';
 import loginRouter from './controllers/login_controller';
 import { createProductRouter } from './controllers/product_controller';
 import registrationRouter from './controllers/registration_controller';
@@ -29,14 +28,8 @@ export function createApp(): Express {
   const productRepository = new ProductRepository();
   const productService = new ProductService(productRepository);
 
-  app.locals.authService = loginService;
   app.locals.basketService = new BasketService(new BasketRepository(prisma));
-  // login router
-  app.use('/', authRouter);
-  app.use(
-    '/products',
-    createProductRouter(new ProductService(new ProductRepository())),
-  );
+
   //health check router
   app.locals.customerService = customerService;
   app.locals.loginService = loginService;
