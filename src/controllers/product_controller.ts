@@ -35,7 +35,7 @@ interface ProductService {
 export class ProductController {
   constructor(private productService: ProductService) {}
 
-  async getCategories(res: Response): Promise<void> {
+  async getProductCategories(res: Response): Promise<void> {
     const categories = await prisma.product.findMany({
       distinct: ['category'],
       select: { category: true },
@@ -43,7 +43,7 @@ export class ProductController {
     res.json(categories.map((c) => c.category));
   }
 
-  async getAll(res: Response): Promise<void> {
+  async getAllProducts(res: Response): Promise<void> {
     const products = await this.productService.findAll();
     res.json(
       products.map(
@@ -59,7 +59,7 @@ export class ProductController {
       ),
     );
   }
-  async getByCategory(req: Request, res: Response): Promise<void> {
+  async getByProductCategory(req: Request, res: Response): Promise<void> {
     const result = categoryQuerySchema.safeParse(req.query);
     if (!result.success) {
       res.status(400).json({
@@ -98,12 +98,12 @@ export class ProductController {
     }
 
     const id = result.data.id;
-    const product = await this.findById(id);
+    const product = await this.findByProductId(id);
     const stockAmount = product ? product.quantity : 0;
     res.json({ inStock: stockAmount > 0 });
   }
 
-  async create(req: Request, res: Response): Promise<void> {
+  async createProduct(req: Request, res: Response): Promise<void> {
     const result = createProductSchema.safeParse(req.body);
     if (!result.success) {
       res.status(400).json({
@@ -114,7 +114,7 @@ export class ProductController {
     }
 
     const { name, price, description, category, quantity, image } = result.data;
-    const _product = await this.productService.create({
+    await this.productService.create({
       name,
       price,
       description,
@@ -124,7 +124,7 @@ export class ProductController {
     });
     res.json('All okay');
   }
-  findById(id: number): Promise<Product | null> {
+  findByProductId(id: number): Promise<Product | null> {
     return prisma.product.findUnique({
       where: { id },
     });
@@ -135,10 +135,14 @@ export function createProductRouter(productService: ProductService): Router {
   const router = Router();
   const controller = new ProductController(productService);
 
-  router.get('/', (_req, res) => controller.getAll(res));
-  router.get('/category', (req, res) => controller.getByCategory(req, res));
-  router.get('/categories', (_req, res) => controller.getCategories(res));
-  router.post('/', (req, res) => controller.create(req, res));
+  router.get('/', (_req, res) => controller.getAllProducts(res));
+  router.get('/category', (req, res) =>
+    controller.getByProductCategory(req, res),
+  );
+  router.get('/categories', (_req, res) =>
+    controller.getProductCategories(res),
+  );
+  router.post('/', (req, res) => controller.createProduct(req, res));
   router.get('/:id/in-stock', (req, res) => controller.getIsInStock(req, res));
 
   return router;

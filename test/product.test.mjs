@@ -66,7 +66,7 @@ test.each([{ id: 1, name: 'Desk lamp' }, null])(
     prisma.product.findUnique.mockResolvedValue(product);
     const controller = new ProductController({});
 
-    await expect(controller.findById(1)).resolves.toBe(product);
+    await expect(controller.findByProductId(1)).resolves.toBe(product);
     expect(prisma.product.findUnique).toHaveBeenLastCalledWith({
       where: { id: 1 },
     });
