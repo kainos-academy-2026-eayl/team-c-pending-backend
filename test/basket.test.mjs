@@ -26,7 +26,10 @@ test('basket controller updates quantity for the authenticated customer', async 
   const authService = {
     getCustomerIdFromToken: vi.fn().mockResolvedValue(7),
   };
-  const basketService = { updateQuantity: vi.fn().mockResolvedValue({}) };
+  const basketService = {
+    updateQuantity: vi.fn().mockResolvedValue({}),
+    getBasket: vi.fn().mockResolvedValue([]),
+  };
 
   await withServer(authService, basketService, async (url) => {
     const response = await fetch(`${url}/basket/42`, {
