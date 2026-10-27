@@ -85,7 +85,6 @@ export function createProductRouter(productService: ProductService): Router {
   router.get('/', (_req, res) => controller.getAll(res));
   router.get('/category', (req, res) => controller.getByCategory(req, res));
   router.get('/categories', (_req, res) => controller.getCategories(res));
-  router.post('/', (req, res) => controller.create(req, res));
 
   return router;
 }
