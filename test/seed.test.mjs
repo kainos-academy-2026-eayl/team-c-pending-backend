@@ -12,7 +12,7 @@ vi.mock('../src/prismaClient.ts', () => ({
   },
 }));
 
-import '../src/seed.ts';
+import '../scripts/seed.ts';
 
 test('seed script creates the product catalogue', () => {
   expect(createMany).toHaveBeenCalledOnce();

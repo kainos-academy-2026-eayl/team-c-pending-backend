@@ -1,4 +1,4 @@
-import prisma from './prismaClient';
+import prisma from '../src/prismaClient';
 import 'dotenv/config';
 
 await prisma.product.createMany({
