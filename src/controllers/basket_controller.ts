@@ -38,7 +38,7 @@ router.post('/:productId', async (req, res) => {
 });
 
 router.get('/', async (req, res) => {
-  const authService = req.app.locals.loginService as LoginService;
+  const loginService = req.app.locals.loginService as LoginService;
 
   const token = req.get('Authorization')?.match(/^Bearer\s+(\S+)$/i)?.[1];
   if (!token) {
@@ -46,7 +46,7 @@ router.get('/', async (req, res) => {
     return;
   }
 
-  const customerId = await authService.getCustomerIdFromToken(token);
+  const customerId = await loginService.getCustomerIdFromToken(token);
   if (!customerId) {
     res.status(401).json({ error: 'Invalid or expired token' });
     return;

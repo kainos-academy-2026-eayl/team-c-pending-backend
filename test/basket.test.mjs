@@ -4,10 +4,10 @@ import { expect, test, vi } from 'vitest';
 import basketRouter from '../src/controllers/basket_controller.ts';
 import BasketRepository from '../src/prisma_repo/basket_repository.ts';
 
-async function withServer(authService, basketService, run) {
+async function withServer(loginService, basketService, run) {
   const app = express();
   app.use(express.json());
-  app.locals.authService = authService;
+  app.locals.loginService = loginService;
   app.locals.basketService = basketService;
   app.use('/basket', basketRouter);
   const server = app.listen(0, '127.0.0.1');
@@ -23,7 +23,7 @@ async function withServer(authService, basketService, run) {
 }
 
 test('basket controller updates quantity for the authenticated customer', async () => {
-  const authService = {
+  const loginService = {
     getCustomerIdFromToken: vi.fn().mockResolvedValue(7),
   };
   const basketService = {
@@ -31,7 +31,7 @@ test('basket controller updates quantity for the authenticated customer', async 
     getBasket: vi.fn().mockResolvedValue([]),
   };
 
-  await withServer(authService, basketService, async (url) => {
+  await withServer(loginService, basketService, async (url) => {
     const response = await fetch(`${url}/basket/42`, {
       method: 'POST',
       headers: {
@@ -42,7 +42,7 @@ test('basket controller updates quantity for the authenticated customer', async 
     });
 
     expect(response.status).toBe(200);
-    expect(authService.getCustomerIdFromToken).toHaveBeenCalledExactlyOnceWith(
+    expect(loginService.getCustomerIdFromToken).toHaveBeenCalledExactlyOnceWith(
       'valid-token',
     );
     expect(basketService.updateQuantity).toHaveBeenCalledExactlyOnceWith(
@@ -59,10 +59,10 @@ test.each([
 ])(
   'basket controller rejects a %s product ID',
   async (_description, productId) => {
-    const authService = { getCustomerIdFromToken: vi.fn() };
+    const loginService = { getCustomerIdFromToken: vi.fn() };
     const basketService = { updateQuantity: vi.fn() };
 
-    await withServer(authService, basketService, async (url) => {
+    await withServer(loginService, basketService, async (url) => {
       const response = await fetch(`${url}/basket/${productId}`, {
         method: 'POST',
         headers: {
@@ -73,17 +73,17 @@ test.each([
       });
 
       expect(response.status).toBe(400);
-      expect(authService.getCustomerIdFromToken).not.toHaveBeenCalled();
+      expect(loginService.getCustomerIdFromToken).not.toHaveBeenCalled();
       expect(basketService.updateQuantity).not.toHaveBeenCalled();
     });
   },
 );
 
 test('basket controller rejects requests without a bearer token', async () => {
-  const authService = { getCustomerIdFromToken: vi.fn() };
+  const loginService = { getCustomerIdFromToken: vi.fn() };
   const basketService = { updateQuantity: vi.fn() };
 
-  await withServer(authService, basketService, async (url) => {
+  await withServer(loginService, basketService, async (url) => {
     const response = await fetch(`${url}/basket/42`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -91,18 +91,18 @@ test('basket controller rejects requests without a bearer token', async () => {
     });
 
     expect(response.status).toBe(401);
-    expect(authService.getCustomerIdFromToken).not.toHaveBeenCalled();
+    expect(loginService.getCustomerIdFromToken).not.toHaveBeenCalled();
     expect(basketService.updateQuantity).not.toHaveBeenCalled();
   });
 });
 
 test('basket controller rejects an invalid bearer token', async () => {
-  const authService = {
+  const loginService = {
     getCustomerIdFromToken: vi.fn().mockResolvedValue(undefined),
   };
   const basketService = { updateQuantity: vi.fn() };
 
-  await withServer(authService, basketService, async (url) => {
+  await withServer(loginService, basketService, async (url) => {
     const response = await fetch(`${url}/basket/42`, {
       method: 'POST',
       headers: {
@@ -113,7 +113,7 @@ test('basket controller rejects an invalid bearer token', async () => {
     });
 
     expect(response.status).toBe(401);
-    expect(authService.getCustomerIdFromToken).toHaveBeenCalledExactlyOnceWith(
+    expect(loginService.getCustomerIdFromToken).toHaveBeenCalledExactlyOnceWith(
       'expired-token',
     );
     expect(basketService.updateQuantity).not.toHaveBeenCalled();

@@ -31,7 +31,6 @@ test('GET /products returns the public product fields', async () => {
     description: 'Adjustable task light',
     category: 'lighting',
     quantity: 8,
-    stock: true,
     image: 'https://example.com/lamp.png',
     internalNote: 'not public',
   };
@@ -49,7 +48,6 @@ test('GET /products returns the public product fields', async () => {
         description: 'Adjustable task light',
         category: 'lighting',
         quantity: 8,
-        stock: true,
         image: 'https://example.com/lamp.png',
       },
     ]);
@@ -65,7 +63,6 @@ test('GET /products/category forwards the category and returns products', async 
     description: 'Adjustable task light',
     category: 'lighting',
     quantity: 8,
-    stock: true,
     image: 'https://example.com/lamp.png',
   };
   const service = {
@@ -76,7 +73,17 @@ test('GET /products/category forwards the category and returns products', async 
     const response = await fetch(`${url}/products/category?category=lighting`);
 
     expect(response.status).toBe(200);
-    expect(await response.json()).toEqual([product]);
+    expect(await response.json()).toEqual([
+      {
+        id: 1,
+        name: 'Desk lamp',
+        price: 24.5,
+        description: 'Adjustable task light',
+        category: 'lighting',
+        quantity: 8,
+        image: 'https://example.com/lamp.png',
+      },
+    ]);
     expect(service.findByCategory).toHaveBeenCalledExactlyOnceWith('lighting');
   });
 });
@@ -88,7 +95,6 @@ test('POST /products forwards product data to the service', async () => {
     description: 'Adjustable task light',
     category: 'lighting',
     quantity: 8,
-    stock: true,
     image: 'https://example.com/lamp.png',
   };
   const service = { create: vi.fn().mockResolvedValue({ id: 1, ...data }) };

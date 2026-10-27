@@ -24,7 +24,6 @@ test('product repository delegates all operations to Prisma', async () => {
     description: 'Adjustable task light',
     category: 'lighting',
     quantity: 8,
-    stock: true,
     image: 'https://example.com/lamp.png',
   };
   const product = { id: 1, ...data };
@@ -49,7 +48,7 @@ test('product repository delegates all operations to Prisma', async () => {
   });
   await expect(repository.create(data)).resolves.toBe(product);
   expect(prisma.product.create).toHaveBeenLastCalledWith({ data });
-  const update = { quantity: 0, stock: false };
+  const update = { quantity: 0 };
   await expect(repository.update(product.id, update)).resolves.toBe(product);
   expect(prisma.product.update).toHaveBeenLastCalledWith({
     where: { id: product.id },
@@ -96,7 +95,6 @@ test('product service delegates its operations to the repository', async () => {
     description: 'Adjustable task light',
     category: 'lighting',
     quantity: 8,
-    stock: true,
     image: 'https://example.com/lamp.png',
   };
   await expect(service.create(data)).resolves.toBe(product);
