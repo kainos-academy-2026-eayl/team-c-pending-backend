@@ -13,6 +13,33 @@ test('createApp falls back when JWT_SECRET is unset', () => {
   }
 });
 
+test('createApp wires the customer service and registration router', async () => {
+  const app = createApp();
+  expect(app.locals.customerService).toBeDefined();
+  const server = app.listen(0, '127.0.0.1');
+
+  try {
+    await once(server, 'listening');
+    const response = await fetch(
+      `http://127.0.0.1:${server.address().port}/register`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({}),
+      },
+    );
+
+    expect(response.status).toBe(400);
+    expect(await response.json()).toMatchObject({
+      error: 'Invalid registration request',
+    });
+  } finally {
+    await new Promise((resolve, reject) => {
+      server.close((error) => (error ? reject(error) : resolve()));
+    });
+  }
+});
+
 test('GET /health returns UP and the current ISO timestamp', async () => {
   const server = createApp().listen(0, '127.0.0.1');
 
