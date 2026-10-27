@@ -7,7 +7,7 @@ test('createApp falls back when JWT_SECRET is unset', () => {
   vi.stubEnv('JWT_SECRET', undefined);
 
   try {
-    expect(createApp().locals.authService).toBeDefined();
+    expect(createApp().locals.loginService).toBeDefined();
   } finally {
     vi.unstubAllEnvs();
   }

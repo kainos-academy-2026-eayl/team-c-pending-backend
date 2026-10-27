@@ -21,7 +21,7 @@ export function createApp(): Express {
   const productRepository = new ProductRepository();
   const productService = new ProductService(productRepository);
 
-  app.locals.authService = loginService;
+  app.locals.loginService = loginService;
   // login router
   app.use('/', loginRouter);
   app.use(
