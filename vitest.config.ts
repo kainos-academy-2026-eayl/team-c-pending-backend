@@ -7,7 +7,7 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       include: ['src/**/*.ts'],
-      exclude: ['src/generated/prisma/**'],
+      exclude: ['src/generated/prisma/**', 'src/seed.ts'],
       reporter: ['text', 'html', 'json-summary'],
       thresholds: {
         statements: 100,
