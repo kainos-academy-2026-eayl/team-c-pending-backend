@@ -24,7 +24,6 @@ export class ProductService {
       | 'description'
       | 'category'
       | 'quantity'
-      | 'stock'
       | 'image'
     >,
   ): Promise<Product> {
