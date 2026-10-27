@@ -19,12 +19,7 @@ export class ProductService {
   async create(
     data: Pick<
       Product,
-      | 'name'
-      | 'price'
-      | 'description'
-      | 'category'
-      | 'quantity'
-      | 'image'
+      'name' | 'price' | 'description' | 'category' | 'quantity' | 'image'
     >,
   ): Promise<Product> {
     return this.productRepository.create({
