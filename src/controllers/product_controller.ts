@@ -8,12 +8,7 @@ interface ProductService {
   create(
     data: Pick<
       Product,
-      | 'name'
-      | 'price'
-      | 'description'
-      | 'category'
-      | 'quantity'
-      | 'image'
+      'name' | 'price' | 'description' | 'category' | 'quantity' | 'image'
     >,
   ): Promise<Product>;
 }
@@ -34,15 +29,7 @@ export class ProductController {
     const products = await this.productService.findAll();
     res.json(
       products.map(
-        ({
-          id,
-          name,
-          price,
-          description,
-          category,
-          quantity,
-          image,
-        }) => ({
+        ({ id, name, price, description, category, quantity, image }) => ({
           id,
           name,
           price,
@@ -60,15 +47,7 @@ export class ProductController {
     );
     res.json(
       products.map(
-        ({
-          id,
-          name,
-          price,
-          description,
-          category,
-          quantity,
-          image,
-        }) => ({
+        ({ id, name, price, description, category, quantity, image }) => ({
           id,
           name,
           price,
@@ -81,8 +60,7 @@ export class ProductController {
     );
   }
   async create(req: Request, res: Response): Promise<void> {
-    const { name, price, description, category, quantity, image } =
-      req.body;
+    const { name, price, description, category, quantity, image } = req.body;
     const _product = await this.productService.create({
       name,
       price,

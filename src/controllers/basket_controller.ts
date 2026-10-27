@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import z from 'zod';
-import type { LoginService } from '../services/login_service';
 import type BasketService from '../services/basket_service';
+import type { LoginService } from '../services/login_service';
 
 const router = Router();
 
