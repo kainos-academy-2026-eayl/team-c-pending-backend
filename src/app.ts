@@ -20,7 +20,6 @@ export function createApp(): Express {
   app.use(express.json({ limit: '100kb' }));
   // initialize repositories and services
   const customerRepository = new CustomerRepository();
-  const customerService = new CustomerService(customerRepository);
   const loginService = new LoginService(
     customerRepository,
     process.env.JWT_SECRET ?? '',
@@ -34,8 +33,14 @@ export function createApp(): Express {
   app.locals.customerService = customerService;
   app.locals.loginService = loginService;
 
-  app.use('/', registrationRouter);
+  app.locals.loginService = loginService;
+  // login router
   app.use('/', loginRouter);
+  app.use(
+    '/products',
+    createProductRouter(new ProductService(new ProductRepository())),
+  );
+  //health check router
   app.use('/', utilityRouter);
   app.use(
     '/products',
