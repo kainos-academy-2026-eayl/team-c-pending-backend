@@ -2,7 +2,17 @@ import { once } from 'node:events';
 import 'dotenv/config';
 import express from 'express';
 import { expect, test, vi } from 'vitest';
+
+vi.mock('../src/prismaClient.ts', () => ({
+  default: {
+    product: {
+      findMany: vi.fn(),
+    },
+  },
+}));
+
 import { createProductRouter } from '../src/controllers/product_controller.ts';
+import prisma from '../src/prismaClient.ts';
 
 async function withServer(productService, run) {
   const app = express();
@@ -85,6 +95,25 @@ test('GET /products/category forwards the category and returns products', async 
       },
     ]);
     expect(service.findByCategory).toHaveBeenCalledExactlyOnceWith('lighting');
+  });
+});
+
+test('GET /products/categories returns distinct category names', async () => {
+  prisma.product.findMany.mockResolvedValue([
+    { category: 'lighting' },
+    { category: 'furniture' },
+  ]);
+  const service = {};
+
+  await withServer(service, async (url) => {
+    const response = await fetch(`${url}/products/categories`);
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual(['lighting', 'furniture']);
+    expect(prisma.product.findMany).toHaveBeenCalledExactlyOnceWith({
+      distinct: ['category'],
+      select: { category: true },
+    });
   });
 });
 
