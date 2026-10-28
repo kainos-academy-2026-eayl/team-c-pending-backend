@@ -2,7 +2,7 @@
 
 A starter repository for building Node.js HTTP services in the Technologist Academy.
 
-It provides an Express service with TypeScript, a production build, Biome linting, and Vitest tests. `GET /health` returns service status and the current UTC timestamp.
+This project provides an Express service with TypeScript, a production build, Biome linting, and Vitest tests. `GET /health` returns service status and the current UTC timestamp. 
 
 ## Requirements
 
