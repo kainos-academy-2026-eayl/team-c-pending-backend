@@ -1,6 +1,7 @@
 import { compare } from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import type { CustomerRepository } from '../prisma_repo/customer_repository';
+import type BasketService from './basket_service';
 
 export class LoginService {
   constructor(
@@ -8,9 +9,16 @@ export class LoginService {
     private jwtSecret: string,
   ) {}
 
-  async getCustomerNameFromToken(
+  async getCustomerDetailsFromToken(
     token: string,
-  ): Promise<{ firstName: string; lastName: string } | null> {
+    basketService: BasketService,
+  ): Promise<{
+    firstName: string;
+    lastName: string;
+    email: string;
+    customerId: number;
+    basketCount: number;
+  } | null> {
     let payload: string | jwt.JwtPayload;
 
     try {
@@ -40,7 +48,18 @@ export class LoginService {
       return null;
     }
 
-    return { firstName: customer.firstName, lastName: customer.lastName };
+    let basketCount = 0;
+    for (const entry of await basketService.getBasket(customerId)) {
+      basketCount += entry.quantity;
+    }
+
+    return {
+      firstName: customer.firstName,
+      lastName: customer.lastName,
+      email: customer.email,
+      customerId: customerId,
+      basketCount: basketCount,
+    };
   }
 
   async login(email: string, password: string): Promise<string | null> {
