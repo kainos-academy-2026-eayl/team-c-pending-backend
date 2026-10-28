@@ -55,8 +55,47 @@ test('basket controller updates quantity for the authenticated customer', async 
 });
 
 test.each([
+  ['missing quantity', {}],
+  ['null quantity', { quantity: null }],
+  ['string quantity', { quantity: '3' }],
+  ['fractional quantity', { quantity: 1.5 }],
+  ['quantity above int32 maximum', { quantity: 2147483648 }],
+  ['quantity below int32 minimum', { quantity: -2147483649 }],
+])(
+  'basket controller rejects an invalid basket request: %s',
+  async (_description, body) => {
+    const loginService = { getCustomerIdFromToken: vi.fn() };
+    const basketService = {
+      updateQuantity: vi.fn(),
+      getBasket: vi.fn(),
+    };
+
+    await withServer(loginService, basketService, async (url) => {
+      const response = await fetch(`${url}/basket/42`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+
+      expect(response.status).toBe(400);
+      expect(await response.json()).toEqual({
+        error: 'Invalid basket request',
+        issues: expect.arrayContaining([expect.any(Object)]),
+      });
+      expect(loginService.getCustomerIdFromToken).not.toHaveBeenCalled();
+      expect(basketService.updateQuantity).not.toHaveBeenCalled();
+      expect(basketService.getBasket).not.toHaveBeenCalled();
+    });
+  },
+);
+
+test.each([
   ['non-numeric', 'not-a-number'],
   ['unsafe integer', '9007199254740992'],
+  ['zero', '0'],
+  ['negative', '-1'],
+  ['fractional', '1.5'],
+  ['above int32 maximum', '2147483648'],
 ])(
   'basket controller rejects a %s product ID',
   async (_description, productId) => {
