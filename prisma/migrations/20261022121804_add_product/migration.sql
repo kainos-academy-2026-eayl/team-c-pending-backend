@@ -1,17 +1,6 @@
-/*
-  Warnings:
-
-  - You are about to drop the column `firstname` on the `Customer` table. All the data in the column will be lost.
-  - You are about to drop the column `lastname` on the `Customer` table. All the data in the column will be lost.
-  - Added the required column `firstName` to the `Customer` table without a default value. This is not possible if the table is not empty.
-  - Added the required column `lastName` to the `Customer` table without a default value. This is not possible if the table is not empty.
-
-*/
 -- AlterTable
-ALTER TABLE "Customer" DROP COLUMN "firstname",
-DROP COLUMN "lastname",
-ADD COLUMN     "firstName" TEXT NOT NULL,
-ADD COLUMN     "lastName" TEXT NOT NULL;
+ALTER TABLE "Customer" RENAME COLUMN "firstname" TO "firstName";
+ALTER TABLE "Customer" RENAME COLUMN "lastname" TO "lastName";
 
 -- CreateTable
 CREATE TABLE "Product" (

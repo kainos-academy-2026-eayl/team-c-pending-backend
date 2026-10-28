@@ -137,3 +137,36 @@ test('database errors are not treated as invalid credentials', async () => {
 
   await expect(service.getCustomerNameFromToken(token)).rejects.toBe(error);
 });
+
+test('getCustomerIdFromToken returns the numeric ID from a valid token', async () => {
+  const service = new LoginService({}, secret);
+  const token = jwt.sign({}, secret, { subject: '42' });
+
+  await expect(service.getCustomerIdFromToken(token)).resolves.toBe(42);
+});
+
+test.each([
+  ['string payload', jwt.sign('not-an-object', secret)],
+  ['missing subject', jwt.sign({}, secret)],
+  ['invalid subject', jwt.sign({}, secret, { subject: '0' })],
+  ['unsafe subject', jwt.sign({}, secret, { subject: '9007199254740992' })],
+  ['invalid token', 'not-a-jwt'],
+])('getCustomerIdFromToken rejects a %s', async (_description, token) => {
+  const service = new LoginService({}, secret);
+
+  await expect(service.getCustomerIdFromToken(token)).resolves.toBeNull();
+});
+
+test('unexpected verification failures are not treated as invalid tokens', async () => {
+  const error = new Error('Unexpected verification failure');
+  const service = new LoginService({}, secret);
+  const verify = vi.spyOn(jwt, 'verify').mockImplementationOnce(() => {
+    throw error;
+  });
+
+  try {
+    await expect(service.getCustomerIdFromToken('token')).rejects.toBe(error);
+  } finally {
+    verify.mockRestore();
+  }
+});
