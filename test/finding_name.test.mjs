@@ -3,6 +3,7 @@ import express from 'express';
 import jwt from 'jsonwebtoken';
 import { expect, test, vi } from 'vitest';
 import loginRouter from '../src/controllers/login_controller.ts';
+import BasketService from '../src/services/basket_service.ts';
 import { LoginService } from '../src/services/login_service.ts';
 
 const secret = 'test-only-secret';
@@ -10,6 +11,25 @@ const secret = 'test-only-secret';
 async function withServer(repository, run) {
   const app = express();
   app.locals.loginService = new LoginService(repository, secret);
+  app.locals.basketService = new BasketService({
+    getBasket(_) {
+      return [
+        {
+          product: {
+            name: 'Apple',
+            id: 0,
+            quantity: 1,
+            price: 1,
+            description: '',
+            category: '',
+            image: null,
+          },
+          productId: 0,
+          quantity: 1,
+        },
+      ];
+    },
+  });
   app.use(loginRouter);
   const server = app.listen(0, '127.0.0.1');
 
@@ -23,7 +43,7 @@ async function withServer(repository, run) {
   }
 }
 // Tests that token is recieved and it returns the customer's first and last name
-test('GET /me verifies the token and returns only the customer name', async () => {
+test('GET /me verifies the token and returns only the customer details', async () => {
   const repository = {
     // finding customer
     findById: vi.fn().mockResolvedValue({
@@ -47,6 +67,9 @@ test('GET /me verifies the token and returns only the customer name', async () =
     expect(await response.json()).toEqual({
       firstName: 'Alex',
       lastName: 'Smith',
+      email: 'alex@example.com',
+      basketCount: 1,
+      customerId: 42,
     });
     expect(repository.findById).toHaveBeenCalledExactlyOnceWith(42);
   });
@@ -122,7 +145,9 @@ test('unexpected JWT verification errors are not treated as invalid credentials'
   });
 
   try {
-    await expect(service.getCustomerNameFromToken('token')).rejects.toBe(error);
+    await expect(service.getCustomerDetailsFromToken('token')).rejects.toBe(
+      error,
+    );
     expect(repository.findById).not.toHaveBeenCalled();
   } finally {
     verify.mockRestore();
@@ -135,7 +160,7 @@ test('database errors are not treated as invalid credentials', async () => {
   const service = new LoginService(repository, secret);
   const token = jwt.sign({}, secret, { subject: '42' });
 
-  await expect(service.getCustomerNameFromToken(token)).rejects.toBe(error);
+  await expect(service.getCustomerDetailsFromToken(token)).rejects.toBe(error);
 });
 
 test('getCustomerIdFromToken returns the numeric ID from a valid token', async () => {
