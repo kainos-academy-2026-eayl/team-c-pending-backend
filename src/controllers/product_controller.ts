@@ -8,7 +8,7 @@ const categoryQuerySchema = z.object({
 });
 
 const productIdParamsSchema = z.object({
-  id: z.coerce.number().int().positive(),
+  productID: z.coerce.number().int().positive(),
 });
 
 const createProductSchema = z.object({
@@ -113,8 +113,7 @@ export class ProductController {
       return;
     }
 
-    const id = result.data.id;
-    const product = await this.findByProductId(id);
+    const product = await this.findByProductId(result.data.productID);
     const stockAmount = product ? product.quantity : 0;
     res.json({ inStock: stockAmount > 0 });
   }
@@ -159,7 +158,9 @@ export function createProductRouter(productService: ProductService): Router {
     controller.getProductCategories(res),
   );
   router.post('/', (req, res) => controller.createProduct(req, res));
-  router.get('/:id/in-stock', (req, res) => controller.getIsInStock(req, res));
+  router.get('/:productID/in-stock', (req, res) =>
+    controller.getIsInStock(req, res),
+  );
 
   return router;
 }

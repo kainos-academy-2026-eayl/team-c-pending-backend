@@ -59,6 +59,8 @@ The Prisma schema also defines:
   creation time.
 - `ProductOrder`: `ProductID`, `OrderID`, and `Quantity`. The product/order pair is
   the composite primary key, allowing one quantity per product in each order.
+- `BasketEntry`: `customerID`, `productID`, and `quantity`, with the customer/product
+  pair as its composite primary key.
 
 The ID migration renames existing columns without replacing their values.
 Existing basket relationships are preserved. No order HTTP endpoints are added.
@@ -68,6 +70,24 @@ Apply pending migrations to the intended database and regenerate the client:
 npx prisma migrate deploy --config prisma7.config.ts
 npx prisma generate --config prisma7.config.ts
 ```
+
+### Sample orders
+
+For development, the configured seed script creates three `Order` records
+(`pending`, `processing`, and `completed`) and four linked `ProductOrder` records.
+It uses the first existing customer and first two existing products, ordered by
+ID, without modifying those records. At least one customer and two products must
+already exist. The sample order types are `delivery` and `collection`.
+
+After applying migrations and generating Prisma Client, run:
+
+```sh
+npx prisma db seed --config prisma7.config.ts
+```
+
+Each run adds three new orders; it does not replace or deduplicate previous
+samples. All sample orders and their product links are inserted in one
+transaction. Only run this against a development database.
 
 ## Current customer name
 

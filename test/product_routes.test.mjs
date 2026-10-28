@@ -147,8 +147,8 @@ test('GET /products/categories returns distinct categories', async () => {
 });
 
 test.each([
-  [{ id: 7, quantity: 3 }, true],
-  [{ id: 7, quantity: 0 }, false],
+  [{ productID: 7, quantity: 3 }, true],
+  [{ productID: 7, quantity: 0 }, false],
   [null, false],
 ])(
   'GET /products/7/in-stock returns %s for the product lookup',
@@ -161,7 +161,7 @@ test.each([
       expect(response.status).toBe(200);
       expect(await response.json()).toEqual({ inStock });
       expect(prisma.product.findUnique).toHaveBeenCalledWith({
-        where: { id: 7 },
+        where: { productID: 7 },
       });
     });
   },
@@ -214,7 +214,9 @@ test('POST /products forwards product data to the service', async () => {
 test('POST /products defaults an omitted image to null', async () => {
   const data = validProductData();
   delete data.image;
-  const service = { create: vi.fn().mockResolvedValue({ id: 1, ...data }) };
+  const service = {
+    create: vi.fn().mockResolvedValue({ productID: 1, ...data }),
+  };
 
   await withServer(service, async (url) => {
     const response = await fetch(`${url}/products`, {

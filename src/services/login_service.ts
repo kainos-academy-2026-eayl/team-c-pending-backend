@@ -30,12 +30,12 @@ export class LoginService {
       return null;
     }
 
-    const customerId = Number(payload.sub);
-    if (!Number.isSafeInteger(customerId)) {
+    const customerID = Number(payload.sub);
+    if (!Number.isSafeInteger(customerID)) {
       return null;
     }
 
-    const customer = await this.customerRepository.findById(customerId);
+    const customer = await this.customerRepository.findById(customerID);
     if (!customer) {
       return null;
     }
@@ -58,10 +58,10 @@ export class LoginService {
 
     return this.issueToken(customer.customerID);
   }
-  issueToken(customerId: number | string): string {
+  issueToken(customerID: number | string): string {
     return jwt.sign({}, this.jwtSecret, {
       algorithm: 'HS256',
-      subject: String(customerId),
+      subject: String(customerID),
       expiresIn: '1h',
     });
   }

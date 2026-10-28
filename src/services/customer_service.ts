@@ -9,8 +9,8 @@ export class CustomerService {
     return this.CustomerRepository.findMany();
   }
 
-  async findById(id: number): Promise<Customer | null> {
-    return this.CustomerRepository.findById(id);
+  async findById(customerID: number): Promise<Customer | null> {
+    return this.CustomerRepository.findById(customerID);
   }
 
   async create(data: {

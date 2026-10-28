@@ -50,11 +50,11 @@ model ProductOrder {
 }
 
 model BasketEntry {
-  customerId Int
-  productId  Int
+  customerID Int
+  productID  Int
   quantity   Int
-  customer   Customer @relation(fields: [customerId], references: [customerID])
-  product    Product  @relation(fields: [productId], references: [productID])
+  customer   Customer @relation(fields: [customerID], references: [customerID])
+  product    Product  @relation(fields: [productID], references: [productID])
 
-  @@id([customerId, productId])
+  @@id([customerID, productID])
 }
