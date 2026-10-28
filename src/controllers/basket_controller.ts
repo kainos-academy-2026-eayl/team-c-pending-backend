@@ -13,7 +13,11 @@ router.post('/:productId', async (req, res) => {
     .parse(req.body);
 
   const productId = Number(req.params.productId);
-  if (!Number.isSafeInteger(productId)) {
+  if (
+    !Number.isSafeInteger(productId) ||
+    productId < 1 ||
+    productId > 2147483647
+  ) {
     res.status(400).json({ error: 'Invalid product ID' });
     return;
   }
