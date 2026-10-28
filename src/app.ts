@@ -1,3 +1,5 @@
+/// <reference path="env.d.ts" />
+
 import express, { type Express } from 'express';
 import 'dotenv/config';
 import basketController from './controllers/basket_controller';

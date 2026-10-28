@@ -1,8 +1,6 @@
 import { type Request, type Response, Router } from 'express';
 import { z } from 'zod';
 import { Prisma } from '../generated/prisma/client';
-import type { CustomerService } from '../services/customer_service';
-import type { LoginService } from '../services/login_service';
 
 const registrationRouter = Router();
 
@@ -29,8 +27,8 @@ registrationRouter.post('/register', async (req: Request, res: Response) => {
     return;
   }
 
-  const customerService = req.app.locals.customerService as CustomerService;
-  const loginService = req.app.locals.loginService as LoginService;
+  const customerService = req.app.locals.customerService;
+  const loginService = req.app.locals.loginService;
 
   try {
     const customer = await customerService.create(result.data);
