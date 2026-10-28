@@ -4,16 +4,16 @@ export default class BasketRepository {
   constructor(private prisma: PrismaClient) {}
 
   async updateQuantity(
-    customerId: number,
-    productId: number,
+    customerID: number,
+    productID: number,
     quantity: number,
   ) {
     if (quantity <= 0) {
       return this.prisma.basketEntry.delete({
         where: {
-          customerId_productId: {
-            customerId,
-            productId,
+          customerID_productID: {
+            customerID,
+            productID,
           },
         },
       });
@@ -21,32 +21,32 @@ export default class BasketRepository {
 
     return this.prisma.basketEntry.upsert({
       where: {
-        customerId_productId: {
-          customerId,
-          productId,
+        customerID_productID: {
+          customerID,
+          productID,
         },
       },
       update: {
         quantity,
       },
       create: {
-        customerId,
-        productId,
+        customerID,
+        productID,
         quantity,
       },
     });
   }
 
-  async getBasket(customerId: number) {
+  async getBasket(customerID: number) {
     return this.prisma.basketEntry.findMany({
       where: {
-        customerId,
+        customerID,
       },
       include: {
         product: true,
       },
       omit: {
-        customerId: true,
+        customerID: true,
       },
     });
   }

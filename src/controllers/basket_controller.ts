@@ -5,7 +5,7 @@ import type { LoginService } from '../services/login_service';
 
 const router = Router();
 
-router.post('/:productId', async (req, res) => {
+router.post('/:productID', async (req, res) => {
   const result = z
     .object({
       quantity: z.int32(),
@@ -22,11 +22,11 @@ router.post('/:productId', async (req, res) => {
 
   const { quantity } = result.data;
 
-  const productId = Number(req.params.productId);
+  const productID = Number(req.params.productID);
   if (
-    !Number.isSafeInteger(productId) ||
-    productId < 1 ||
-    productId > 2147483647
+    !Number.isSafeInteger(productID) ||
+    productID < 1 ||
+    productID > 2147483647
   ) {
     res.status(400).json({ error: 'Invalid product ID' });
     return;
@@ -40,15 +40,15 @@ router.post('/:productId', async (req, res) => {
     return;
   }
 
-  const customerId = await loginService.getCustomerIdFromToken(token);
-  if (!customerId) {
+  const customerID = await loginService.getCustomerIDFromToken(token);
+  if (!customerID) {
     res.status(401).json({ error: 'Invalid or expired token' });
     return;
   }
 
   const basketService = (await req.app.locals.basketService) as BasketService;
-  await basketService.updateQuantity(customerId, productId, quantity);
-  res.status(200).json(await basketService.getBasket(customerId));
+  await basketService.updateQuantity(customerID, productID, quantity);
+  res.status(200).json(await basketService.getBasket(customerID));
 });
 
 router.get('/', async (req, res) => {
@@ -60,15 +60,15 @@ router.get('/', async (req, res) => {
     return;
   }
 
-  const customerId = await loginService.getCustomerIdFromToken(token);
-  if (!customerId) {
+  const customerID = await loginService.getCustomerIDFromToken(token);
+  if (!customerID) {
     res.status(401).json({ error: 'Invalid or expired token' });
     return;
   }
 
   const basketService = (await req.app.locals.basketService) as BasketService;
 
-  res.status(200).json(await basketService.getBasket(customerId));
+  res.status(200).json(await basketService.getBasket(customerID));
 });
 
 export default router;

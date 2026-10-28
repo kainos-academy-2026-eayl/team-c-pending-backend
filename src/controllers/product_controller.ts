@@ -7,7 +7,7 @@ const categoryQuerySchema = z.object({
   category: z.string().trim().min(1),
 });
 
-const productIdParamsSchema = z.object({
+const productIDParamsSchema = z.object({
   productID: z.coerce.number().int().positive(),
 });
 
@@ -33,7 +33,7 @@ interface ProductService {
 
 // this basically creates a controller for product projects and what a product as a class should look like
 export class ProductController {
-  constructor(private productService: ProductService) {}
+  constructor(private productService: ProductService) { }
 
   async getProductCategories(res: Response): Promise<void> {
     const categories = await prisma.product.findMany({
@@ -104,7 +104,7 @@ export class ProductController {
   }
 
   async getIsInStock(req: Request, res: Response): Promise<void> {
-    const result = productIdParamsSchema.safeParse(req.params);
+    const result = productIDParamsSchema.safeParse(req.params);
     if (!result.success) {
       res.status(400).json({
         error: 'Invalid product id',
@@ -113,7 +113,7 @@ export class ProductController {
       return;
     }
 
-    const product = await this.findByProductId(result.data.productID);
+    const product = await this.findByProductID(result.data.productID);
     const stockAmount = product ? product.quantity : 0;
     res.json({ inStock: stockAmount > 0 });
   }
@@ -139,7 +139,7 @@ export class ProductController {
     });
     res.json('All okay');
   }
-  findByProductId(productID: number): Promise<Product | null> {
+  findByProductID(productID: number): Promise<Product | null> {
     return prisma.product.findUnique({
       where: { productID },
     });

@@ -42,7 +42,7 @@ test('product repository delegates all operations to Prisma', async () => {
   expect(prisma.product.findMany).toHaveBeenLastCalledWith({
     where: { category: data.category },
   });
-  await expect(repository.findById(product.productID)).resolves.toBe(product);
+  await expect(repository.findByID(product.productID)).resolves.toBe(product);
   expect(prisma.product.findUnique).toHaveBeenLastCalledWith({
     where: { productID: product.productID },
   });
@@ -68,7 +68,7 @@ test.each([{ productID: 1, name: 'Desk lamp' }, null])(
     prisma.product.findUnique.mockResolvedValue(product);
     const controller = new ProductController({});
 
-    await expect(controller.findByProductId(1)).resolves.toBe(product);
+    await expect(controller.findByProductID(1)).resolves.toBe(product);
     expect(prisma.product.findUnique).toHaveBeenLastCalledWith({
       where: { productID: 1 },
     });
@@ -79,14 +79,14 @@ test('product service delegates its operations to the repository', async () => {
   const product = { productID: 1, name: 'Desk lamp', category: 'lighting' };
   const repository = {
     findMany: vi.fn().mockResolvedValue([product]),
-    findById: vi.fn().mockResolvedValue(product),
+    findByID: vi.fn().mockResolvedValue(product),
     findByCategory: vi.fn().mockResolvedValue([product]),
     create: vi.fn().mockResolvedValue(product),
   };
   const service = new ProductService(repository);
 
   await expect(service.findAll()).resolves.toEqual([product]);
-  await expect(service.findById(product.productID)).resolves.toBe(product);
+  await expect(service.findByID(product.productID)).resolves.toBe(product);
   await expect(service.findByCategory(product.category)).resolves.toEqual([
     product,
   ]);
@@ -102,7 +102,7 @@ test('product service delegates its operations to the repository', async () => {
   await expect(service.create(data)).resolves.toBe(product);
 
   expect(repository.findMany).toHaveBeenCalledOnce();
-  expect(repository.findById).toHaveBeenCalledExactlyOnceWith(
+  expect(repository.findByID).toHaveBeenCalledExactlyOnceWith(
     product.productID,
   );
   expect(repository.findByCategory).toHaveBeenCalledExactlyOnceWith(

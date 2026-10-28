@@ -1,21 +1,21 @@
 import type BasketRepository from '../prisma_repo/basket_repository';
 
 export default class BasketService {
-  constructor(private basketRepository: BasketRepository) {}
+  constructor(private basketRepository: BasketRepository) { }
 
   async updateQuantity(
-    customerId: number,
-    productId: number,
+    customerID: number,
+    productID: number,
     quantity: number,
   ) {
     return this.basketRepository.updateQuantity(
-      customerId,
-      productId,
+      customerID,
+      productID,
       quantity,
     );
   }
 
-  async getBasket(customerId: number) {
-    return this.basketRepository.getBasket(customerId);
+  async getBasket(customerID: number) {
+    return this.basketRepository.getBasket(customerID);
   }
 }

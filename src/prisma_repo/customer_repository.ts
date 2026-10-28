@@ -12,7 +12,7 @@ export class CustomerRepository {
     return prisma.customer.findUnique({ where: { email } });
   }
   //finds specific customers with IDs
-  findById(customerID: number): Promise<Customer | null> {
+  findByID(customerID: number): Promise<Customer | null> {
     return prisma.customer.findUnique({ where: { customerID } });
   }
 

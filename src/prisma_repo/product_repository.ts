@@ -11,7 +11,7 @@ export class ProductRepository {
     return prisma.product.findMany({ where: { category } });
   }
   //finds specific products with IDs
-  findById(productID: number): Promise<Product | null> {
+  findByID(productID: number): Promise<Product | null> {
     return prisma.product.findUnique({ where: { productID } });
   }
   //finds specific products with categories

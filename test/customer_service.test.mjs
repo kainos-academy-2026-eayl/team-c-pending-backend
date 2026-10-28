@@ -32,7 +32,7 @@ test('customer repository delegates all operations to Prisma', async () => {
   expect(prisma.customer.findUnique).toHaveBeenLastCalledWith({
     where: { email: customer.email },
   });
-  await expect(repository.findById(customer.customerID)).resolves.toBe(
+  await expect(repository.findByID(customer.customerID)).resolves.toBe(
     customer,
   );
   expect(prisma.customer.findUnique).toHaveBeenLastCalledWith({
@@ -70,13 +70,13 @@ test('customer service delegates its operations to the repository', async () => 
   const customer = { customerID: 1, email: 'user@example.com' };
   const repository = {
     findMany: vi.fn().mockResolvedValue([customer]),
-    findById: vi.fn().mockResolvedValue(customer),
+    findByID: vi.fn().mockResolvedValue(customer),
     create: vi.fn().mockResolvedValue(customer),
   };
   const service = new CustomerService(repository);
 
   await expect(service.findAll()).resolves.toEqual([customer]);
-  await expect(service.findById(customer.customerID)).resolves.toBe(customer);
+  await expect(service.findByID(customer.customerID)).resolves.toBe(customer);
   const data = {
     firstname: 'Test',
     lastname: 'Customer',
@@ -86,7 +86,7 @@ test('customer service delegates its operations to the repository', async () => 
   await expect(service.create(data)).resolves.toBe(customer);
 
   expect(repository.findMany).toHaveBeenCalledOnce();
-  expect(repository.findById).toHaveBeenCalledExactlyOnceWith(
+  expect(repository.findByID).toHaveBeenCalledExactlyOnceWith(
     customer.customerID,
   );
   expect(repository.create).toHaveBeenCalledExactlyOnceWith({

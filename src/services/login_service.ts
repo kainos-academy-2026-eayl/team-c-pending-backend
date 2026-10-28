@@ -6,11 +6,11 @@ export class LoginService {
   constructor(
     private customerRepository: CustomerRepository,
     private jwtSecret: string,
-  ) {}
+  ) { }
 
   async getCustomerNameFromToken(
     token: string,
-  ): Promise<{ firstName: string; lastName: string } | null> {
+  ): Promise<{ firstName: string; lastName: string; } | null> {
     let payload: string | jwt.JwtPayload;
 
     try {
@@ -35,7 +35,7 @@ export class LoginService {
       return null;
     }
 
-    const customer = await this.customerRepository.findById(customerID);
+    const customer = await this.customerRepository.findByID(customerID);
     if (!customer) {
       return null;
     }
@@ -66,7 +66,7 @@ export class LoginService {
     });
   }
 
-  async getCustomerIdFromToken(token: string) {
+  async getCustomerIDFromToken(token: string) {
     let payload: string | jwt.JwtPayload;
     //catching the token errors in case of any issues
     try {
@@ -86,10 +86,10 @@ export class LoginService {
       return null;
     }
     // changing the ID into a proper number we can search with
-    const customerId = Number(payload.sub);
-    if (!Number.isSafeInteger(customerId)) {
+    const customerID = Number(payload.sub);
+    if (!Number.isSafeInteger(customerID)) {
       return null;
     }
-    return customerId;
+    return customerID;
   }
 }
