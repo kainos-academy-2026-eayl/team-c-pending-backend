@@ -163,7 +163,6 @@ test('database errors are not treated as invalid credentials', async () => {
   await expect(service.getCustomerDetailsFromToken(token)).rejects.toBe(error);
 });
 
-
 test('getCustomerIDFromToken returns the numeric ID from a valid token', async () => {
   const service = new LoginService({}, secret);
   const token = jwt.sign({}, secret, { subject: '42' });
