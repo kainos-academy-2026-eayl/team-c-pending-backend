@@ -6,11 +6,21 @@ import type { LoginService } from '../services/login_service';
 const router = Router();
 
 router.post('/:productId', async (req, res) => {
-  const { quantity } = z
+  const result = z
     .object({
-      quantity: z.number(),
+      quantity: z.int32(),
     })
-    .parse(req.body);
+    .safeParse(req.body);
+
+  if (!result.success) {
+    res.status(400).json({
+      error: 'Invalid basket request',
+      issues: result.error.issues,
+    });
+    return;
+  }
+
+  const { quantity } = result.data;
 
   const productId = Number(req.params.productId);
   if (
