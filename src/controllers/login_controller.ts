@@ -13,7 +13,10 @@ loginRouter.get('/me', async (req: Request, res: Response) => {
   }
 
   const loginService = req.app.locals.loginService as LoginService;
-  const customerName = await loginService.getCustomerNameFromToken(token);
+  const customerName = await loginService.getCustomerDetailsFromToken(
+    token,
+    req.app.locals.basketService,
+  );
   // no token or expired check
   if (!customerName) {
     res.status(401).json({ error: 'Invalid or expired token' });
