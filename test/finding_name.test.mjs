@@ -27,7 +27,7 @@ test('GET /me verifies the token and returns only the customer name', async () =
   const repository = {
     // finding customer
     findById: vi.fn().mockResolvedValue({
-      id: 42,
+      customerID: 42,
       firstName: 'Alex',
       lastName: 'Smith',
       email: 'alex@example.com',

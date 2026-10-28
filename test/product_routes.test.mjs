@@ -47,7 +47,7 @@ async function withServer(productService, run) {
 
 test('GET /products returns the public product fields', async () => {
   const product = {
-    id: 1,
+    productID: 1,
     name: 'Desk lamp',
     price: 24.5,
     description: 'Adjustable task light',
@@ -64,7 +64,7 @@ test('GET /products returns the public product fields', async () => {
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual([
       {
-        id: 1,
+        productID: 1,
         name: 'Desk lamp',
         price: 24.5,
         description: 'Adjustable task light',
@@ -79,7 +79,7 @@ test('GET /products returns the public product fields', async () => {
 
 test('GET /products/category forwards the category and returns products', async () => {
   const product = {
-    id: 1,
+    productID: 1,
     name: 'Desk lamp',
     price: 24.5,
     description: 'Adjustable task light',
@@ -95,7 +95,17 @@ test('GET /products/category forwards the category and returns products', async 
     const response = await fetch(`${url}/products/category?category=lighting`);
 
     expect(response.status).toBe(200);
-    expect(await response.json()).toEqual([product]);
+    expect(await response.json()).toEqual([
+      {
+        productID: 1,
+        name: 'Desk lamp',
+        price: 24.5,
+        description: 'Adjustable task light',
+        category: 'lighting',
+        quantity: 8,
+        image: 'https://example.com/lamp.png',
+      },
+    ]);
     expect(service.findByCategory).toHaveBeenCalledExactlyOnceWith('lighting');
   });
 });
@@ -176,8 +186,17 @@ test.each(['/products/not-a-number/in-stock', '/products/0/in-stock'])(
 );
 
 test('POST /products forwards product data to the service', async () => {
-  const data = validProductData();
-  const service = { create: vi.fn().mockResolvedValue({ id: 1, ...data }) };
+  const data = {
+    name: 'Desk lamp',
+    price: 24.5,
+    description: 'Adjustable task light',
+    category: 'lighting',
+    quantity: 8,
+    image: 'https://example.com/lamp.png',
+  };
+  const service = {
+    create: vi.fn().mockResolvedValue({ productID: 1, ...data }),
+  };
 
   await withServer(service, async (url) => {
     const response = await fetch(`${url}/products`, {

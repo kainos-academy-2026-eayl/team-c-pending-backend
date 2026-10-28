@@ -54,7 +54,7 @@ test('registration rejects invalid request bodies', async () => {
 test('registration creates a customer and returns an access token', async () => {
   const customerService = {
     create: vi.fn().mockResolvedValue({
-      id: 1,
+      customerID: 1,
       firstName: 'Test',
       lastName: 'Customer',
       email: 'test@example.com',
@@ -76,7 +76,7 @@ test('registration creates a customer and returns an access token', async () => 
 
     expect(response.status).toBe(201);
     expect(await response.json()).toEqual({
-      id: 1,
+      customerID: 1,
       firstName: 'Test',
       lastName: 'Customer',
       email: 'test@example.com',

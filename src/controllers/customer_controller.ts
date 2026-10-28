@@ -10,8 +10,8 @@ export class CustomerController {
   async getAll(res: Response): Promise<void> {
     const customers = await this.customerService.findAll();
     res.json(
-      customers.map(({ id, firstName, lastName, email }) => ({
-        id,
+      customers.map(({ customerID, firstName, lastName, email }) => ({
+        customerID,
         firstName,
         lastName,
         email,

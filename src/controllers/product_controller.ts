@@ -47,8 +47,16 @@ export class ProductController {
     const products = await this.productService.findAll();
     res.json(
       products.map(
-        ({ id, name, price, description, category, quantity, image }) => ({
-          id,
+        ({
+          productID,
+          name,
+          price,
+          description,
+          category,
+          quantity,
+          image,
+        }) => ({
+          productID,
           name,
           price,
           description,
@@ -74,8 +82,16 @@ export class ProductController {
     );
     res.json(
       products.map(
-        ({ id, name, price, description, category, quantity, image }) => ({
-          id,
+        ({
+          productID,
+          name,
+          price,
+          description,
+          category,
+          quantity,
+          image,
+        }) => ({
+          productID,
           name,
           price,
           description,
@@ -124,9 +140,9 @@ export class ProductController {
     });
     res.json('All okay');
   }
-  findByProductId(id: number): Promise<Product | null> {
+  findByProductId(productID: number): Promise<Product | null> {
     return prisma.product.findUnique({
-      where: { id },
+      where: { productID },
     });
   }
 }

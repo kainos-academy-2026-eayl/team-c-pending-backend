@@ -44,13 +44,7 @@ export class LoginService {
   }
 
   async login(email: string, password: string): Promise<string | null> {
-    const customer = await (
-      this.customerRepository as CustomerRepository & {
-        findByEmail(
-          email: string,
-        ): Promise<{ id: string | number; password: string } | null>;
-      }
-    ).findByEmail(email);
+    const customer = await this.customerRepository.findByEmail(email);
 
     if (!customer) {
       return null;
@@ -62,7 +56,7 @@ export class LoginService {
       return null;
     }
 
-    return this.issueToken(customer.id);
+    return this.issueToken(customer.customerID);
   }
   issueToken(customerId: number | string): string {
     return jwt.sign({}, this.jwtSecret, {

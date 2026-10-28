@@ -110,7 +110,9 @@ test('login returns null when the customer does not exist', async () => {
 
 test('login returns null when the password does not match', async () => {
   const customerRepository = {
-    findByEmail: vi.fn().mockResolvedValue({ id: 1, password: 'stored-hash' }),
+    findByEmail: vi
+      .fn()
+      .mockResolvedValue({ customerID: 1, password: 'stored-hash' }),
   };
   compare.mockResolvedValue(false);
   const service = new LoginService(customerRepository, 'secret');
@@ -122,7 +124,9 @@ test('login returns null when the password does not match', async () => {
 
 test('login signs a token after the password matches', async () => {
   const customerRepository = {
-    findByEmail: vi.fn().mockResolvedValue({ id: 42, password: 'stored-hash' }),
+    findByEmail: vi
+      .fn()
+      .mockResolvedValue({ customerID: 42, password: 'stored-hash' }),
   };
   compare.mockResolvedValue(true);
   jwt.sign.mockReturnValue('signed-token');

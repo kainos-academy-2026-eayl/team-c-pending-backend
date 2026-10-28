@@ -12,8 +12,8 @@ export class CustomerRepository {
     return prisma.customer.findUnique({ where: { email } });
   }
   //finds specific customers with IDs
-  findById(id: number): Promise<Customer | null> {
-    return prisma.customer.findUnique({ where: { id } });
+  findById(customerID: number): Promise<Customer | null> {
+    return prisma.customer.findUnique({ where: { customerID } });
   }
 
   // creates new customer in database
@@ -27,7 +27,7 @@ export class CustomerRepository {
   }
   // updates customer in database
   async update(
-    id: number,
+    customerID: number,
     data: Partial<{
       firstName: string;
       lastName: string;
@@ -41,10 +41,10 @@ export class CustomerRepository {
         ? data
         : { ...data, password: await hash(data.password, 12) };
 
-    return prisma.customer.update({ where: { id }, data: updateData });
+    return prisma.customer.update({ where: { customerID }, data: updateData });
   }
   // deletes customer from database
-  delete(id: number): Promise<Customer> {
-    return prisma.customer.delete({ where: { id } });
+  delete(customerID: number): Promise<Customer> {
+    return prisma.customer.delete({ where: { customerID } });
   }
 }

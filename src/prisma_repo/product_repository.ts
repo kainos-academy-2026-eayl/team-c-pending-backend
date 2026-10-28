@@ -11,8 +11,8 @@ export class ProductRepository {
     return prisma.product.findMany({ where: { category } });
   }
   //finds specific products with IDs
-  findById(id: number): Promise<Product | null> {
-    return prisma.product.findUnique({ where: { id } });
+  findById(productID: number): Promise<Product | null> {
+    return prisma.product.findUnique({ where: { productID } });
   }
   //finds specific products with categories
   // creates new product in database
@@ -29,7 +29,7 @@ export class ProductRepository {
 
   // updates product in database
   async update(
-    id: number,
+    productID: number,
     data: Partial<{
       name: string;
       price: number;
@@ -40,10 +40,10 @@ export class ProductRepository {
     }>,
     // hashes passsword being updated
   ): Promise<Product> {
-    return prisma.product.update({ where: { id }, data });
+    return prisma.product.update({ where: { productID }, data });
   }
   // deletes product from database
-  delete(id: number): Promise<Product> {
-    return prisma.product.delete({ where: { id } });
+  delete(productID: number): Promise<Product> {
+    return prisma.product.delete({ where: { productID } });
   }
 }
