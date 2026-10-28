@@ -114,7 +114,7 @@ export class ProductController {
     }
 
     const { name, price, description, category, quantity, image } = result.data;
-    await this.productService.createProduct({
+    await this.productService.create({
       name,
       price,
       description,
