@@ -1,7 +1,7 @@
 import type BasketRepository from '../prisma_repo/basket_repository';
 
 export default class BasketService {
-  constructor(private basketRepository: BasketRepository) { }
+  constructor(private basketRepository: BasketRepository) {}
 
   async updateQuantity(
     customerID: number,

@@ -3,7 +3,7 @@ import type { Customer } from '../generated/prisma/client';
 import type { CustomerRepository } from '../prisma_repo/customer_repository';
 
 export class CustomerService {
-  constructor(private CustomerRepository: CustomerRepository) { }
+  constructor(private CustomerRepository: CustomerRepository) {}
 
   findAll(): Promise<Customer[]> {
     return this.CustomerRepository.findMany();

@@ -2,7 +2,7 @@ import type { Product } from '../generated/prisma/client';
 import type { ProductRepository } from '../prisma_repo/product_repository.ts';
 
 export class ProductService {
-  constructor(private productRepository: ProductRepository) { }
+  constructor(private productRepository: ProductRepository) {}
 
   findAll(): Promise<Product[]> {
     return this.productRepository.findMany();

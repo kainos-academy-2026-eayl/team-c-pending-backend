@@ -6,11 +6,11 @@ export class LoginService {
   constructor(
     private customerRepository: CustomerRepository,
     private jwtSecret: string,
-  ) { }
+  ) {}
 
   async getCustomerNameFromToken(
     token: string,
-  ): Promise<{ firstName: string; lastName: string; } | null> {
+  ): Promise<{ firstName: string; lastName: string } | null> {
     let payload: string | jwt.JwtPayload;
 
     try {
