@@ -38,12 +38,7 @@ export function createApp(): Express {
   app.use('/', registrationRouter);
   app.use('/', loginRouter);
   app.use('/', utilityRouter);
-  app.use(
-    '/products',
-    createProductRouter(
-      productService,
-    ),
-  );
+  app.use('/products', createProductRouter(productService));
   app.use('/basket', basketController);
 
   return app;

@@ -44,7 +44,7 @@ router.post('/:productID', async (req, res) => {
     return;
   }
 
-  const basketService = (await req.app.locals.basketService);
+  const basketService = await req.app.locals.basketService;
   await basketService.updateQuantity(customerID, productID, quantity);
   res.status(200).json(await basketService.getBasket(customerID));
 });
