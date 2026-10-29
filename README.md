@@ -63,13 +63,60 @@ The Prisma schema also defines:
   pair as its composite primary key.
 
 The ID migration renames existing columns without replacing their values.
-Existing basket relationships are preserved. No order HTTP endpoints are added.
+Existing basket relationships are preserved.
 Apply pending migrations to the intended database and regenerate the client:
 
 ```sh
 npx prisma migrate deploy --config prisma7.config.ts
 npx prisma generate --config prisma7.config.ts
 ```
+
+### Order stock validation
+
+`POST /orders` requires an `Authorization: Bearer <accessToken>` header and a JSON
+body containing `type`, for example `{"type":"delivery"}`.
+New orders always start with status `pending`; a submitted `status` is ignored.
+The customer ID comes from the token.
+Products and quantities come directly from that customer's stored basket;
+client-supplied `customerID` and `orderItems` fields are ignored.
+
+An empty basket returns `400 Bad Request` with `{"error":"Basket is empty"}`.
+The basket is read, stock is deducted, the order and its items are created, and that customer's
+basket is cleared in one serializable transaction. Failed checkout leaves the
+basket intact; failure to clear the basket rolls back order creation too.
+Concurrent checkout conflicts fail rather than creating duplicate orders.
+
+The endpoint checks each basket product against its current stock before
+creating the order or its items. Quantities for repeated product IDs are added
+together for this check. A quantity equal to available stock is allowed.
+Insufficient stock returns `409 Conflict` with
+`{"error":"Insufficient stock","productIDs":[7]}`, identifying the first product
+that exceeds available stock. No order is created on failure.
+
+Stock deductions use conditional updates so stock cannot fall below zero.
+All deductions, order creation and basket clearing commit or roll back together.
+Serialization conflicts return `409 Conflict` asking the client to retry checkout.
+
+All `/orders` routes require a Bearer token. `GET /orders` lists only the signed-in
+customer's orders. `GET /orders/customer/:customerID` returns `403` for another
+customer ID. Reading, updating or deleting an individual order is scoped to the
+token customer ID and returns `404` when that customer does not own it.
+Ownership cannot be changed through order updates.
+
+The optional PostgreSQL checkout tests exercise actual rollback and concurrent
+checkout behaviour. To run them, set `TEST_DATABASE_URL` to a dedicated test
+database and apply the Prisma migrations before running:
+
+```sh
+DATABASE_URL="$TEST_DATABASE_URL" npx prisma migrate deploy --config prisma7.config.ts
+npm test -- test/order_checkout_postgres.test.mjs
+```
+
+Fixtures and cleanup use Prisma Client with generated IDs and unique emails.
+Only records created by the tests are removed; existing records are not truncated.
+Prisma query extensions inject failures to verify transaction rollback without
+SQL triggers. Without `TEST_DATABASE_URL`, these integration tests are skipped.
+Do not point it at a production database.
 
 ### Sample orders
 

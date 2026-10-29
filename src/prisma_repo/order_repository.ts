@@ -1,4 +1,8 @@
-import type { Order, Prisma } from '../generated/prisma/client';
+import {
+  type Order,
+  Prisma,
+  type PrismaClient,
+} from '../generated/prisma/client';
 import prisma from '../prismaClient';
 
 const orderInclude = { orderItems: true } satisfies Prisma.OrderInclude;
@@ -7,21 +11,12 @@ export type OrderWithItems = Prisma.OrderGetPayload<{
   include: typeof orderInclude;
 }>;
 
-export type OrderItemInput = {
-  productID: number;
-  quantity: number;
-};
-
 export type CreateOrderData = {
   customerID: number;
-  status: string;
   type: string;
-  orderItems: OrderItemInput[];
 };
 
-export type UpdateOrderData = Partial<
-  Pick<Order, 'customerID' | 'status' | 'type'>
->;
+export type UpdateOrderData = Partial<Pick<Order, 'status' | 'type'>>;
 
 export class OrderProductsNotFoundError extends Error {
   constructor(readonly productIDs: number[]) {
@@ -30,84 +25,134 @@ export class OrderProductsNotFoundError extends Error {
   }
 }
 
-export class OrderRepository {
-  findManyOrders(): Promise<OrderWithItems[]> {
-    return prisma.order.findMany({ include: orderInclude });
+export class OrderInsufficientStockError extends Error {
+  constructor(readonly productIDs: number[]) {
+    super(`Insufficient stock for products: ${productIDs.join(', ')}`);
+    this.name = 'OrderInsufficientStockError';
   }
+}
+
+export class OrderBasketEmptyError extends Error {
+  constructor() {
+    super('Basket is empty');
+    this.name = 'OrderBasketEmptyError';
+  }
+}
+
+export class OrderRepository {
+  constructor(private client: PrismaClient = prisma) {}
 
   findOrdersByCustomerID(customerID: number): Promise<OrderWithItems[]> {
-    return prisma.order.findMany({
+    return this.client.order.findMany({
       where: { customerID },
       include: orderInclude,
     });
   }
 
-  findOrderByID(orderID: number): Promise<OrderWithItems | null> {
-    return prisma.order.findUnique({
-      where: { orderID },
+  findOrderByID(
+    orderID: number,
+    customerID: number,
+  ): Promise<OrderWithItems | null> {
+    return this.client.order.findUnique({
+      where: { orderID, customerID },
       include: orderInclude,
     });
   }
 
   createOrder(data: CreateOrderData): Promise<OrderWithItems> {
-    return prisma.$transaction(async (transaction) => {
-      const requestedProductIDs = [
-        ...new Set(data.orderItems.map(({ productID }) => productID)),
-      ];
-      const products =
-        requestedProductIDs.length === 0
-          ? []
-          : await transaction.product.findMany({
-              where: { productID: { in: requestedProductIDs } },
-              select: { productID: true, price: true },
-            });
-      const productPrices = new Map(
-        products.map(({ productID, price }) => [productID, price]),
-      );
-      const missingProductIDs = requestedProductIDs.filter(
-        (productID) => !productPrices.has(productID),
-      );
+    return this.client.$transaction(
+      async (transaction) => {
+        const basketEntries = await transaction.basketEntry.findMany({
+          where: { customerID: data.customerID },
+          select: { productID: true, quantity: true },
+        });
+        if (basketEntries.length === 0) {
+          throw new OrderBasketEmptyError();
+        }
 
-      if (missingProductIDs.length > 0) {
-        throw new OrderProductsNotFoundError(missingProductIDs);
-      }
+        const requestedProductIDs = [
+          ...new Set(basketEntries.map(({ productID }) => productID)),
+        ];
+        const products = await transaction.product.findMany({
+          where: { productID: { in: requestedProductIDs } },
+          select: { productID: true, price: true, quantity: true },
+        });
+        const productsByID = new Map(
+          products.map((product) => [product.productID, product]),
+        );
+        const missingProductIDs = requestedProductIDs.filter(
+          (productID) => !productsByID.has(productID),
+        );
 
-      return transaction.order.create({
-        data: {
-          customerID: data.customerID,
-          status: data.status,
-          type: data.type,
-          orderItems: {
-            create: data.orderItems.map(({ productID, quantity }) => {
-              const unitPrice = productPrices.get(productID);
-              if (unitPrice === undefined) {
-                throw new OrderProductsNotFoundError([productID]);
-              }
+        if (missingProductIDs.length > 0) {
+          throw new OrderProductsNotFoundError(missingProductIDs);
+        }
 
-              return { productID, quantity, unitPrice };
-            }),
+        const requestedQuantities = new Map<number, number>();
+        const orderItems = basketEntries.map(({ productID, quantity }) => {
+          const product = productsByID.get(productID);
+          if (product?.price === undefined) {
+            throw new OrderProductsNotFoundError([productID]);
+          }
+
+          const totalQuantity =
+            (requestedQuantities.get(productID) ?? 0) + quantity;
+          requestedQuantities.set(productID, totalQuantity);
+          if (totalQuantity > product.quantity) {
+            throw new OrderInsufficientStockError([productID]);
+          }
+
+          return { productID, quantity, unitPrice: product.price };
+        });
+
+        for (const [productID, quantity] of [...requestedQuantities].sort(
+          ([firstID], [secondID]) => firstID - secondID,
+        )) {
+          const result = await transaction.product.updateMany({
+            where: { productID, quantity: { gte: quantity } },
+            data: { quantity: { decrement: quantity } },
+          });
+          if (result.count !== 1) {
+            throw new OrderInsufficientStockError([productID]);
+          }
+        }
+
+        const order = await transaction.order.create({
+          data: {
+            customerID: data.customerID,
+            status: 'pending',
+            type: data.type,
+            orderItems: {
+              create: orderItems,
+            },
           },
-        },
-        include: orderInclude,
-      });
-    });
+          include: orderInclude,
+        });
+        await transaction.basketEntry.deleteMany({
+          where: { customerID: data.customerID },
+        });
+        return order;
+      },
+      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+    );
   }
 
   updateOrder(
     orderID: number,
     updateData: UpdateOrderData,
+    customerID: number,
   ): Promise<OrderWithItems> {
-    return prisma.order.update({
-      where: { orderID },
-      data: updateData,
+    return this.client.order.update({
+      where: { orderID, customerID },
+      data: { status: updateData.status, type: updateData.type },
       include: orderInclude,
     });
   }
 
-  delete(orderID: number): Promise<OrderWithItems> {
-    return prisma.$transaction(async (transaction) => {
+  delete(orderID: number, customerID: number): Promise<OrderWithItems> {
+    return this.client.$transaction(async (transaction) => {
       const order = await transaction.order.findUniqueOrThrow({
-        where: { orderID },
+        where: { orderID, customerID },
         include: orderInclude,
       });
 
@@ -115,7 +160,7 @@ export class OrderRepository {
       await transaction.productOrder.deleteMany({
         where: { OrderID: orderID },
       });
-      await transaction.order.delete({ where: { orderID } });
+      await transaction.order.delete({ where: { orderID, customerID } });
 
       return order;
     });
