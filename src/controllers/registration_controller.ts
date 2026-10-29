@@ -34,11 +34,11 @@ registrationRouter.post('/register', async (req: Request, res: Response) => {
     const customer = await customerService.create(result.data);
 
     res.status(201).json({
-      id: customer.id,
+      customerID: customer.customerID,
       firstName: customer.firstName,
       lastName: customer.lastName,
       email: customer.email,
-      accessToken: loginService.issueToken(customer.id),
+      accessToken: loginService.issueToken(customer.customerID),
       tokenType: 'Bearer',
       expiresIn: 3600,
     });

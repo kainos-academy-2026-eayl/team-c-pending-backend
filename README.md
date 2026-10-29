@@ -2,7 +2,7 @@
 
 A starter repository for building Node.js HTTP services in the Technologist Academy.
 
-It provides an Express service with TypeScript, a production build, Biome linting, and Vitest tests. `GET /health` returns service status and the current UTC timestamp.
+This provides an Express service with TypeScript, a production build, Biome linting, and Vitest tests. `GET /health` returns service status and the current UTC timestamp. 
 
 ## Requirements
 
@@ -44,6 +44,50 @@ curl http://localhost:3000/health
 ```
 
 Use `npm ci` rather than `npm install`. It installs the exact versions recorded in `package-lock.json`, so everyone on the team runs identical dependencies. Use `npm install` only when you are deliberately adding or upgrading a package.
+
+## Customer, product, and order IDs
+
+Customer records use `customerID` and product records use `productID`, including
+API responses from `/customers`, `/register`, `/products`, and
+`/products/category`. Clients must use these fields instead of `id`. JWT subjects
+still contain the numeric customer ID as a string.
+
+The Prisma schema also defines:
+
+- `Order`: `orderID`, `customerID`, `status`, `date`, and `type`. Each order belongs
+  to a customer. `status` and `type` are required strings; `date` defaults to the
+  creation time.
+- `ProductOrder`: `ProductID`, `OrderID`, and `Quantity`. The product/order pair is
+  the composite primary key, allowing one quantity per product in each order.
+- `BasketEntry`: `customerID`, `productID`, and `quantity`, with the customer/product
+  pair as its composite primary key.
+
+The ID migration renames existing columns without replacing their values.
+Existing basket relationships are preserved. No order HTTP endpoints are added.
+Apply pending migrations to the intended database and regenerate the client:
+
+```sh
+npx prisma migrate deploy --config prisma7.config.ts
+npx prisma generate --config prisma7.config.ts
+```
+
+### Sample orders
+
+For development, the configured seed script creates three `Order` records
+(`pending`, `processing`, and `completed`) and four linked `ProductOrder` records.
+It uses the first existing customer and first two existing products, ordered by
+ID, without modifying those records. At least one customer and two products must
+already exist. The sample order types are `delivery` and `collection`.
+
+After applying migrations and generating Prisma Client, run:
+
+```sh
+npx prisma db seed --config prisma7.config.ts
+```
+
+Each run adds three new orders; it does not replace or deduplicate previous
+samples. All sample orders and their product links are inserted in one
+transaction. Only run this against a development database.
 
 ## Current customer name
 

@@ -7,8 +7,8 @@ const categoryQuerySchema = z.object({
   category: z.string().trim().min(1),
 });
 
-const productIdParamsSchema = z.object({
-  id: z.coerce.number().int().positive(),
+const productIDParamsSchema = z.object({
+  productID: z.coerce.number().int().positive(),
 });
 
 const createProductSchema = z.object({
@@ -47,8 +47,16 @@ export class ProductController {
     const products = await this.productService.findAll();
     res.json(
       products.map(
-        ({ id, name, price, description, category, quantity, image }) => ({
-          id,
+        ({
+          productID,
+          name,
+          price,
+          description,
+          category,
+          quantity,
+          image,
+        }) => ({
+          productID,
           name,
           price,
           description,
@@ -74,8 +82,16 @@ export class ProductController {
     );
     res.json(
       products.map(
-        ({ id, name, price, description, category, quantity, image }) => ({
-          id,
+        ({
+          productID,
+          name,
+          price,
+          description,
+          category,
+          quantity,
+          image,
+        }) => ({
+          productID,
           name,
           price,
           description,
@@ -88,7 +104,7 @@ export class ProductController {
   }
 
   async getIsInStock(req: Request, res: Response): Promise<void> {
-    const result = productIdParamsSchema.safeParse(req.params);
+    const result = productIDParamsSchema.safeParse(req.params);
     if (!result.success) {
       res.status(400).json({
         error: 'Invalid product id',
@@ -97,8 +113,7 @@ export class ProductController {
       return;
     }
 
-    const id = result.data.id;
-    const product = await this.findByProductId(id);
+    const product = await this.findByProductID(result.data.productID);
     const stockAmount = product ? product.quantity : 0;
     res.json({ inStock: stockAmount > 0 });
   }
@@ -124,9 +139,9 @@ export class ProductController {
     });
     res.json('All okay');
   }
-  findByProductId(id: number): Promise<Product | null> {
+  findByProductID(productID: number): Promise<Product | null> {
     return prisma.product.findUnique({
-      where: { id },
+      where: { productID },
     });
   }
 }
@@ -143,7 +158,9 @@ export function createProductRouter(productService: ProductService): Router {
     controller.getProductCategories(res),
   );
   router.post('/', (req, res) => controller.createProduct(req, res));
-  router.get('/:id/in-stock', (req, res) => controller.getIsInStock(req, res));
+  router.get('/:productID/in-stock', (req, res) =>
+    controller.getIsInStock(req, res),
+  );
 
   return router;
 }

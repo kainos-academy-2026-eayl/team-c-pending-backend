@@ -24,7 +24,7 @@ async function withServer(customerService, run) {
 
 test('GET /customers returns only public customer fields', async () => {
   const customer = {
-    id: 1,
+    customerID: 1,
     firstName: 'Test',
     lastName: 'Customer',
     email: 'test@example.com',
@@ -38,7 +38,7 @@ test('GET /customers returns only public customer fields', async () => {
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual([
       {
-        id: 1,
+        customerID: 1,
         firstName: 'Test',
         lastName: 'Customer',
         email: 'test@example.com',
@@ -55,7 +55,9 @@ test('POST /customers preserves the existing creation response', async () => {
     email: 'test@example.com',
     password: 'submitted-password',
   };
-  const service = { create: vi.fn().mockResolvedValue({ id: 1, ...data }) };
+  const service = {
+    create: vi.fn().mockResolvedValue({ customerID: 1, ...data }),
+  };
 
   await withServer(service, async (url) => {
     const response = await fetch(`${url}/customers`, {

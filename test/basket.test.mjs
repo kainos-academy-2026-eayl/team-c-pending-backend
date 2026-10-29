@@ -25,7 +25,7 @@ async function withServer(loginService, basketService, run) {
 
 test('basket controller updates quantity for the authenticated customer', async () => {
   const loginService = {
-    getCustomerIdFromToken: vi.fn().mockResolvedValue(7),
+    getCustomerIDFromToken: vi.fn().mockResolvedValue(7),
   };
   const basketService = {
     updateQuantity: vi.fn().mockResolvedValue({}),
@@ -43,7 +43,7 @@ test('basket controller updates quantity for the authenticated customer', async 
     });
 
     expect(response.status).toBe(200);
-    expect(loginService.getCustomerIdFromToken).toHaveBeenCalledExactlyOnceWith(
+    expect(loginService.getCustomerIDFromToken).toHaveBeenCalledExactlyOnceWith(
       'valid-token',
     );
     expect(basketService.updateQuantity).toHaveBeenCalledExactlyOnceWith(
@@ -64,7 +64,7 @@ test.each([
 ])(
   'basket controller rejects an invalid basket request: %s',
   async (_description, body) => {
-    const loginService = { getCustomerIdFromToken: vi.fn() };
+    const loginService = { getCustomerIDFromToken: vi.fn() };
     const basketService = {
       updateQuantity: vi.fn(),
       getBasket: vi.fn(),
@@ -82,7 +82,7 @@ test.each([
         error: 'Invalid basket request',
         issues: expect.arrayContaining([expect.any(Object)]),
       });
-      expect(loginService.getCustomerIdFromToken).not.toHaveBeenCalled();
+      expect(loginService.getCustomerIDFromToken).not.toHaveBeenCalled();
       expect(basketService.updateQuantity).not.toHaveBeenCalled();
       expect(basketService.getBasket).not.toHaveBeenCalled();
     });
@@ -98,12 +98,12 @@ test.each([
   ['above int32 maximum', '2147483648'],
 ])(
   'basket controller rejects a %s product ID',
-  async (_description, productId) => {
-    const loginService = { getCustomerIdFromToken: vi.fn() };
+  async (_description, productID) => {
+    const loginService = { getCustomerIDFromToken: vi.fn() };
     const basketService = { updateQuantity: vi.fn() };
 
     await withServer(loginService, basketService, async (url) => {
-      const response = await fetch(`${url}/basket/${productId}`, {
+      const response = await fetch(`${url}/basket/${productID}`, {
         method: 'POST',
         headers: {
           Authorization: 'Bearer valid-token',
@@ -113,14 +113,14 @@ test.each([
       });
 
       expect(response.status).toBe(400);
-      expect(loginService.getCustomerIdFromToken).not.toHaveBeenCalled();
+      expect(loginService.getCustomerIDFromToken).not.toHaveBeenCalled();
       expect(basketService.updateQuantity).not.toHaveBeenCalled();
     });
   },
 );
 
 test('basket controller rejects requests without a bearer token', async () => {
-  const loginService = { getCustomerIdFromToken: vi.fn() };
+  const loginService = { getCustomerIDFromToken: vi.fn() };
   const basketService = { updateQuantity: vi.fn() };
 
   await withServer(loginService, basketService, async (url) => {
@@ -131,14 +131,14 @@ test('basket controller rejects requests without a bearer token', async () => {
     });
 
     expect(response.status).toBe(401);
-    expect(loginService.getCustomerIdFromToken).not.toHaveBeenCalled();
+    expect(loginService.getCustomerIDFromToken).not.toHaveBeenCalled();
     expect(basketService.updateQuantity).not.toHaveBeenCalled();
   });
 });
 
 test('basket controller rejects an invalid bearer token', async () => {
   const loginService = {
-    getCustomerIdFromToken: vi.fn().mockResolvedValue(undefined),
+    getCustomerIDFromToken: vi.fn().mockResolvedValue(undefined),
   };
   const basketService = { updateQuantity: vi.fn() };
 
@@ -153,7 +153,7 @@ test('basket controller rejects an invalid bearer token', async () => {
     });
 
     expect(response.status).toBe(401);
-    expect(loginService.getCustomerIdFromToken).toHaveBeenCalledExactlyOnceWith(
+    expect(loginService.getCustomerIDFromToken).toHaveBeenCalledExactlyOnceWith(
       'expired-token',
     );
     expect(basketService.updateQuantity).not.toHaveBeenCalled();
@@ -162,9 +162,9 @@ test('basket controller rejects an invalid bearer token', async () => {
 
 test('basket controller returns the authenticated customer basket', async () => {
   const loginService = {
-    getCustomerIdFromToken: vi.fn().mockResolvedValue(7),
+    getCustomerIDFromToken: vi.fn().mockResolvedValue(7),
   };
-  const basket = [{ productId: 42, quantity: 3 }];
+  const basket = [{ productID: 42, quantity: 3 }];
   const basketService = { getBasket: vi.fn().mockResolvedValue(basket) };
 
   await withServer(loginService, basketService, async (url) => {
@@ -174,7 +174,7 @@ test('basket controller returns the authenticated customer basket', async () => 
 
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual(basket);
-    expect(loginService.getCustomerIdFromToken).toHaveBeenCalledExactlyOnceWith(
+    expect(loginService.getCustomerIDFromToken).toHaveBeenCalledExactlyOnceWith(
       'valid-token',
     );
     expect(basketService.getBasket).toHaveBeenCalledExactlyOnceWith(7);
@@ -189,7 +189,7 @@ test.each([
   'basket controller rejects GET /basket with authorization %s',
   async (authorization) => {
     const loginService = {
-      getCustomerIdFromToken: vi.fn().mockResolvedValue(undefined),
+      getCustomerIDFromToken: vi.fn().mockResolvedValue(undefined),
     };
     const basketService = { getBasket: vi.fn() };
 
@@ -204,10 +204,10 @@ test.each([
       });
       if (authorization?.startsWith('Bearer ')) {
         expect(
-          loginService.getCustomerIdFromToken,
+          loginService.getCustomerIDFromToken,
         ).toHaveBeenCalledExactlyOnceWith('expired-token');
       } else {
-        expect(loginService.getCustomerIdFromToken).not.toHaveBeenCalled();
+        expect(loginService.getCustomerIDFromToken).not.toHaveBeenCalled();
       }
       expect(basketService.getBasket).not.toHaveBeenCalled();
     });
@@ -215,7 +215,7 @@ test.each([
 );
 
 test('basket repository upserts a positive quantity', async () => {
-  const entry = { customerId: 7, productId: 42, quantity: 3 };
+  const entry = { customerID: 7, productID: 42, quantity: 3 };
   const prisma = {
     basketEntry: {
       delete: vi.fn(),
@@ -226,9 +226,9 @@ test('basket repository upserts a positive quantity', async () => {
 
   await expect(repository.updateQuantity(7, 42, 3)).resolves.toBe(entry);
   expect(prisma.basketEntry.upsert).toHaveBeenCalledExactlyOnceWith({
-    where: { customerId_productId: { customerId: 7, productId: 42 } },
+    where: { customerID_productID: { customerID: 7, productID: 42 } },
     update: { quantity: 3 },
-    create: { customerId: 7, productId: 42, quantity: 3 },
+    create: { customerID: 7, productID: 42, quantity: 3 },
   });
   expect(prisma.basketEntry.delete).not.toHaveBeenCalled();
 });
@@ -236,7 +236,7 @@ test('basket repository upserts a positive quantity', async () => {
 test.each([0, -1])(
   'basket repository deletes an entry when quantity is %i',
   async (quantity) => {
-    const deletedEntry = { customerId: 7, productId: 42, quantity: 1 };
+    const deletedEntry = { customerID: 7, productID: 42, quantity: 1 };
     const prisma = {
       basketEntry: {
         delete: vi.fn().mockResolvedValue(deletedEntry),
@@ -249,14 +249,14 @@ test.each([0, -1])(
       deletedEntry,
     );
     expect(prisma.basketEntry.delete).toHaveBeenCalledExactlyOnceWith({
-      where: { customerId_productId: { customerId: 7, productId: 42 } },
+      where: { customerID_productID: { customerID: 7, productID: 42 } },
     });
     expect(prisma.basketEntry.upsert).not.toHaveBeenCalled();
   },
 );
 
 test('basket repository retrieves entries with their product and omits customer ID', async () => {
-  const entries = [{ productId: 42, quantity: 3 }];
+  const entries = [{ productID: 42, quantity: 3 }];
   const prisma = {
     basketEntry: {
       findMany: vi.fn().mockResolvedValue(entries),
@@ -266,14 +266,14 @@ test('basket repository retrieves entries with their product and omits customer 
 
   await expect(repository.getBasket(7)).resolves.toBe(entries);
   expect(prisma.basketEntry.findMany).toHaveBeenCalledExactlyOnceWith({
-    where: { customerId: 7 },
+    where: { customerID: 7 },
     include: { product: true },
-    omit: { customerId: true },
+    omit: { customerID: true },
   });
 });
 
 test('basket service delegates quantity updates and basket reads', async () => {
-  const entry = { customerId: 7, productId: 42, quantity: 3 };
+  const entry = { customerID: 7, productID: 42, quantity: 3 };
   const basket = [entry];
   const repository = {
     updateQuantity: vi.fn().mockResolvedValue(entry),

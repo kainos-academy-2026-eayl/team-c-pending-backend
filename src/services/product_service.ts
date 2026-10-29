@@ -8,8 +8,8 @@ export class ProductService {
     return this.productRepository.findMany();
   }
 
-  async findById(id: number): Promise<Product | null> {
-    return this.productRepository.findById(id);
+  async findByID(productID: number): Promise<Product | null> {
+    return this.productRepository.findByID(productID);
   }
 
   async findByCategory(category: string): Promise<Product[]> {

@@ -38,18 +38,18 @@ export class LoginService {
       return null;
     }
 
-    const customerId = Number(payload.sub);
-    if (!Number.isSafeInteger(customerId)) {
+    const customerID = Number(payload.sub);
+    if (!Number.isSafeInteger(customerID)) {
       return null;
     }
 
-    const customer = await this.customerRepository.findById(customerId);
+    const customer = await this.customerRepository.findByID(customerID);
     if (!customer) {
       return null;
     }
 
     let basketCount = 0;
-    for (const entry of await basketService.getBasket(customerId)) {
+    for (const entry of await basketService.getBasket(customerID)) {
       basketCount += entry.quantity;
     }
 
@@ -57,19 +57,13 @@ export class LoginService {
       firstName: customer.firstName,
       lastName: customer.lastName,
       email: customer.email,
-      customerId: customerId,
+      customerId: customerID,
       basketCount: basketCount,
     };
   }
 
   async login(email: string, password: string): Promise<string | null> {
-    const customer = await (
-      this.customerRepository as CustomerRepository & {
-        findByEmail(
-          email: string,
-        ): Promise<{ id: string | number; password: string } | null>;
-      }
-    ).findByEmail(email);
+    const customer = await this.customerRepository.findByEmail(email);
 
     if (!customer) {
       return null;
@@ -81,17 +75,17 @@ export class LoginService {
       return null;
     }
 
-    return this.issueToken(customer.id);
+    return this.issueToken(customer.customerID);
   }
-  issueToken(customerId: number | string): string {
+  issueToken(customerID: number | string): string {
     return jwt.sign({}, this.jwtSecret, {
       algorithm: 'HS256',
-      subject: String(customerId),
+      subject: String(customerID),
       expiresIn: '1h',
     });
   }
 
-  async getCustomerIdFromToken(token: string) {
+  async getCustomerIDFromToken(token: string) {
     let payload: string | jwt.JwtPayload;
     //catching the token errors in case of any issues
     try {
@@ -111,10 +105,10 @@ export class LoginService {
       return null;
     }
     // changing the ID into a proper number we can search with
-    const customerId = Number(payload.sub);
-    if (!Number.isSafeInteger(customerId)) {
+    const customerID = Number(payload.sub);
+    if (!Number.isSafeInteger(customerID)) {
       return null;
     }
-    return customerId;
+    return customerID;
   }
 }

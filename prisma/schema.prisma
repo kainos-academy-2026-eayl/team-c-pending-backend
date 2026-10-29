@@ -8,16 +8,17 @@ datasource db {
 }
 
 model Customer {
-  id            Int           @id @default(autoincrement())
+  customerID    Int           @id @default(autoincrement())
   firstName     String
   lastName      String
   email         String        @unique
   password      String
   basketEntries BasketEntry[]
+  orders        Order[]
 }
 
 model Product {
-  id            Int           @id @default(autoincrement())
+  productID     Int            @id @default(autoincrement())
   name          String
   price         Float
   description   String
@@ -25,14 +26,35 @@ model Product {
   quantity      Int
   image         String?
   basketEntries BasketEntry[]
+  productOrders ProductOrder[]
+}
+
+model Order {
+  orderID       Int            @id @default(autoincrement())
+  customerID    Int
+  status        String
+  date          DateTime       @default(now())
+  type          String
+  customer      Customer       @relation(fields: [customerID], references: [customerID])
+  productOrders ProductOrder[]
+}
+
+model ProductOrder {
+  ProductID Int
+  OrderID   Int
+  Quantity  Int
+  product   Product @relation(fields: [ProductID], references: [productID])
+  order     Order   @relation(fields: [OrderID], references: [orderID])
+
+  @@id([ProductID, OrderID])
 }
 
 model BasketEntry {
-  customerId Int
-  productId  Int
+  customerID Int
+  productID  Int
   quantity   Int
-  customer   Customer @relation(fields: [customerId], references: [id])
-  product    Product  @relation(fields: [productId], references: [id])
+  customer   Customer @relation(fields: [customerID], references: [customerID])
+  product    Product  @relation(fields: [productID], references: [productID])
 
-  @@id([customerId, productId])
+  @@id([customerID, productID])
 }

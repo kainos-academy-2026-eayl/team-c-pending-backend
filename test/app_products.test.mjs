@@ -7,7 +7,7 @@ vi.mock('../src/prisma_repo/product_repository.ts', () => ({
     findMany() {
       return Promise.resolve([
         {
-          id: 1,
+          productID: 1,
           name: 'Desk lamp',
           price: 24.5,
           description: 'Adjustable task light',
@@ -33,7 +33,7 @@ test('createApp mounts the product router at /products', async () => {
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual([
       {
-        id: 1,
+        productID: 1,
         name: 'Desk lamp',
         price: 24.5,
         description: 'Adjustable task light',

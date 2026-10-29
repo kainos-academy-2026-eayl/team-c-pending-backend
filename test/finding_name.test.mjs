@@ -46,8 +46,8 @@ async function withServer(repository, run) {
 test('GET /me verifies the token and returns only the customer details', async () => {
   const repository = {
     // finding customer
-    findById: vi.fn().mockResolvedValue({
-      id: 42,
+    findByID: vi.fn().mockResolvedValue({
+      customerID: 42,
       firstName: 'Alex',
       lastName: 'Smith',
       email: 'alex@example.com',
@@ -71,14 +71,14 @@ test('GET /me verifies the token and returns only the customer details', async (
       basketCount: 1,
       customerId: 42,
     });
-    expect(repository.findById).toHaveBeenCalledExactlyOnceWith(42);
+    expect(repository.findByID).toHaveBeenCalledExactlyOnceWith(42);
   });
 });
 
 test.each([undefined, 'Basic credentials', 'Bearer', 'Bearer one two'])(
   'GET /me rejects a missing or malformed Bearer header: %s',
   async (authorization) => {
-    const repository = { findById: vi.fn() };
+    const repository = { findByID: vi.fn() };
     await withServer(repository, async (url) => {
       const response = await fetch(`${url}/me`, {
         headers: authorization ? { Authorization: authorization } : {},
@@ -87,7 +87,7 @@ test.each([undefined, 'Basic credentials', 'Bearer', 'Bearer one two'])(
       expect(await response.json()).toEqual({
         error: 'A Bearer token is required',
       });
-      expect(repository.findById).not.toHaveBeenCalled();
+      expect(repository.findByID).not.toHaveBeenCalled();
     });
   },
 );
@@ -108,7 +108,7 @@ test.each([
     jwt.sign({}, secret, { subject }),
   ]),
 ])('GET /me rejects a token with %s', async (_description, token) => {
-  const repository = { findById: vi.fn() };
+  const repository = { findByID: vi.fn() };
   await withServer(repository, async (url) => {
     const response = await fetch(`${url}/me`, {
       headers: { Authorization: `Bearer ${token}` },
@@ -117,12 +117,12 @@ test.each([
     expect(await response.json()).toEqual({
       error: 'Invalid or expired token',
     });
-    expect(repository.findById).not.toHaveBeenCalled();
+    expect(repository.findByID).not.toHaveBeenCalled();
   });
 });
 
 test('GET /me rejects a token for a deleted customer', async () => {
-  const repository = { findById: vi.fn().mockResolvedValue(null) };
+  const repository = { findByID: vi.fn().mockResolvedValue(null) };
   const token = jwt.sign({}, secret, { subject: '42' });
   await withServer(repository, async (url) => {
     const response = await fetch(`${url}/me`, {
@@ -132,13 +132,13 @@ test('GET /me rejects a token for a deleted customer', async () => {
     expect(await response.json()).toEqual({
       error: 'Invalid or expired token',
     });
-    expect(repository.findById).toHaveBeenCalledWith(42);
+    expect(repository.findByID).toHaveBeenCalledWith(42);
   });
 });
 
 test('unexpected JWT verification errors are not treated as invalid credentials', async () => {
   const error = new Error('Unexpected verification failure');
-  const repository = { findById: vi.fn() };
+  const repository = { findByID: vi.fn() };
   const service = new LoginService(repository, secret);
   const verify = vi.spyOn(jwt, 'verify').mockImplementationOnce(() => {
     throw error;
@@ -148,7 +148,7 @@ test('unexpected JWT verification errors are not treated as invalid credentials'
     await expect(service.getCustomerDetailsFromToken('token')).rejects.toBe(
       error,
     );
-    expect(repository.findById).not.toHaveBeenCalled();
+    expect(repository.findByID).not.toHaveBeenCalled();
   } finally {
     verify.mockRestore();
   }
@@ -156,18 +156,18 @@ test('unexpected JWT verification errors are not treated as invalid credentials'
 
 test('database errors are not treated as invalid credentials', async () => {
   const error = new Error('Database unavailable');
-  const repository = { findById: vi.fn().mockRejectedValue(error) };
+  const repository = { findByID: vi.fn().mockRejectedValue(error) };
   const service = new LoginService(repository, secret);
   const token = jwt.sign({}, secret, { subject: '42' });
 
   await expect(service.getCustomerDetailsFromToken(token)).rejects.toBe(error);
 });
 
-test('getCustomerIdFromToken returns the numeric ID from a valid token', async () => {
+test('getCustomerIDFromToken returns the numeric ID from a valid token', async () => {
   const service = new LoginService({}, secret);
   const token = jwt.sign({}, secret, { subject: '42' });
 
-  await expect(service.getCustomerIdFromToken(token)).resolves.toBe(42);
+  await expect(service.getCustomerIDFromToken(token)).resolves.toBe(42);
 });
 
 test.each([
@@ -176,10 +176,10 @@ test.each([
   ['invalid subject', jwt.sign({}, secret, { subject: '0' })],
   ['unsafe subject', jwt.sign({}, secret, { subject: '9007199254740992' })],
   ['invalid token', 'not-a-jwt'],
-])('getCustomerIdFromToken rejects a %s', async (_description, token) => {
+])('getCustomerIDFromToken rejects a %s', async (_description, token) => {
   const service = new LoginService({}, secret);
 
-  await expect(service.getCustomerIdFromToken(token)).resolves.toBeNull();
+  await expect(service.getCustomerIDFromToken(token)).resolves.toBeNull();
 });
 
 test('unexpected verification failures are not treated as invalid tokens', async () => {
@@ -190,40 +190,7 @@ test('unexpected verification failures are not treated as invalid tokens', async
   });
 
   try {
-    await expect(service.getCustomerIdFromToken('token')).rejects.toBe(error);
-  } finally {
-    verify.mockRestore();
-  }
-});
-
-test('getCustomerIdFromToken returns the numeric ID from a valid token', async () => {
-  const service = new LoginService({}, secret);
-  const token = jwt.sign({}, secret, { subject: '42' });
-
-  await expect(service.getCustomerIdFromToken(token)).resolves.toBe(42);
-});
-
-test.each([
-  ['string payload', jwt.sign('not-an-object', secret)],
-  ['missing subject', jwt.sign({}, secret)],
-  ['invalid subject', jwt.sign({}, secret, { subject: '0' })],
-  ['unsafe subject', jwt.sign({}, secret, { subject: '9007199254740992' })],
-  ['invalid token', 'not-a-jwt'],
-])('getCustomerIdFromToken rejects a %s', async (_description, token) => {
-  const service = new LoginService({}, secret);
-
-  await expect(service.getCustomerIdFromToken(token)).resolves.toBeNull();
-});
-
-test('unexpected verification failures are not treated as invalid tokens', async () => {
-  const error = new Error('Unexpected verification failure');
-  const service = new LoginService({}, secret);
-  const verify = vi.spyOn(jwt, 'verify').mockImplementationOnce(() => {
-    throw error;
-  });
-
-  try {
-    await expect(service.getCustomerIdFromToken('token')).rejects.toBe(error);
+    await expect(service.getCustomerIDFromToken('token')).rejects.toBe(error);
   } finally {
     verify.mockRestore();
   }
