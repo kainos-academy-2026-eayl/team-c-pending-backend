@@ -12,12 +12,16 @@ export class CustomerService {
   async findByID(customerID: number): Promise<Customer | null> {
     return this.CustomerRepository.findByID(customerID);
   }
+  async CheckRole(customerID: number): Promise<Customer> {
+    return this.CustomerRepository.CheckRole(customerID);
+  }
 
   async create(data: {
     firstName: string;
     lastName: string;
     email: string;
     password: string;
+    role: string;
   }): Promise<Customer> {
     const hashedPassword = await hash(data.password, 12);
 
