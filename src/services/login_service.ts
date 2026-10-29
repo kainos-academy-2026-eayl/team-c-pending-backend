@@ -7,7 +7,7 @@ export class LoginService {
   constructor(
     private customerRepository: CustomerRepository,
     private jwtSecret: string,
-  ) {}
+  ) { }
 
   async getCustomerDetailsFromToken(
     token: string,
@@ -17,6 +17,7 @@ export class LoginService {
     lastName: string;
     email: string;
     customerId: number;
+    role: string;
     basketCount: number;
   } | null> {
     let payload: string | jwt.JwtPayload;
@@ -58,6 +59,7 @@ export class LoginService {
       lastName: customer.lastName,
       email: customer.email,
       customerId: customerID,
+      role: customer.role,
       basketCount: basketCount,
     };
   }
