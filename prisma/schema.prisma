@@ -27,16 +27,20 @@ model Product {
   image         String?
   basketEntries BasketEntry[]
   productOrders ProductOrder[]
+
+  orderItems OrderItem[]
 }
 
 model Order {
   orderID       Int            @id @default(autoincrement())
   customerID    Int
-  status        String
+  status        String         @default("pending")
   date          DateTime       @default(now())
-  type          String
+  type          String  
   customer      Customer       @relation(fields: [customerID], references: [customerID])
   productOrders ProductOrder[]
+
+  orderItems OrderItem[]
 }
 
 model ProductOrder {
@@ -47,6 +51,20 @@ model ProductOrder {
   order     Order   @relation(fields: [OrderID], references: [orderID])
 
   @@id([ProductID, OrderID])
+}
+
+model OrderItem {
+  orderItemID Int @id @default(autoincrement())
+
+  orderID      Int
+  productID    Int
+
+  quantity     Int
+  unitPrice    Float
+  itemStatus   String @default("active")
+
+  order   Order   @relation(fields: [orderID], references: [orderID])
+  product Product @relation(fields: [productID], references: [productID])
 }
 
 model BasketEntry {
