@@ -110,9 +110,50 @@ test('create order rejects product IDs that do not exist', async () => {
     name: 'OrderProductsNotFoundError',
     productIDs: [99],
   });
+
   expect(transaction.order.create).not.toHaveBeenCalled();
 });
 
+test('create order without items skips product lookup', async () => {
+  const order = { orderID: 1, orderItems: [] };
+  transaction.order.create.mockResolvedValue(order);
+  const data = {
+    customerID: 42,
+    status: 'pending',
+    type: 'delivery',
+    orderItems: [],
+  };
+
+  await expect(new OrderRepository().createOrder(data)).resolves.toBe(order);
+  expect(transaction.product.findMany).not.toHaveBeenCalled();
+  expect(transaction.order.create).toHaveBeenCalledExactlyOnceWith({
+    data: {
+      customerID: 42,
+      status: 'pending',
+      type: 'delivery',
+      orderItems: { create: [] },
+    },
+    include: { orderItems: true },
+  });
+});
+
+test('create order rejects an unavailable product price before writing', async () => {
+  transaction.product.findMany.mockResolvedValue([
+    { productID: 7, price: undefined },
+  ]);
+  await expect(
+    new OrderRepository().createOrder({
+      customerID: 42,
+      status: 'pending',
+      type: 'delivery',
+      orderItems: [{ productID: 7, quantity: 1 }],
+    }),
+  ).rejects.toMatchObject({
+    name: 'OrderProductsNotFoundError',
+    productIDs: [7],
+  });
+  expect(transaction.order.create).not.toHaveBeenCalled();
+});
 test('update uses the schema customerID spelling', async () => {
   const order = { orderID: 1, customerID: 43 };
   prisma.order.update.mockResolvedValue(order);

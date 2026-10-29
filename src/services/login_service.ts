@@ -49,7 +49,7 @@ export class LoginService {
     }
 
     let basketCount = 0;
-    for (const entry of await basketService.getBasket(customerId)) {
+    for (const entry of await basketService.getBasket(customerID)) {
       basketCount += entry.quantity;
     }
 
@@ -57,7 +57,7 @@ export class LoginService {
       firstName: customer.firstName,
       lastName: customer.lastName,
       email: customer.email,
-      customerId: customerId,
+      customerId: customerID,
       basketCount: basketCount,
     };
   }

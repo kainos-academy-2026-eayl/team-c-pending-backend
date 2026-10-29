@@ -2,6 +2,7 @@ import { once } from 'node:events';
 import express from 'express';
 import { expect, test, vi } from 'vitest';
 import { createOrderRouter } from '../src/controllers/order_controller.ts';
+import { Prisma } from '../src/generated/prisma/client.ts';
 import { OrderProductsNotFoundError } from '../src/services/order_service.ts';
 
 async function withServer(orderService, run) {
@@ -155,5 +156,160 @@ test('order route rejects items referring to unknown products', async () => {
       error: 'Order contains unknown products',
       productIDs: [99],
     });
+  });
+});
+
+test.each([
+  [
+    'GET',
+    '/orders/customer/0',
+    'findOrdersByCustomerID',
+    'Invalid customer ID',
+  ],
+  ['GET', '/orders/invalid', 'findOrderByID', 'Invalid order ID'],
+  ['PATCH', '/orders/2147483648', 'updateOrder', 'Invalid order ID'],
+  ['DELETE', '/orders/-1', 'delete', 'Invalid order ID'],
+])(
+  '%s %s rejects invalid IDs without calling the service',
+  async (method, path, operation, error) => {
+    const service = { [operation]: vi.fn() };
+    await withServer(service, async (url) => {
+      const response = await fetch(`${url}${path}`, { method });
+      expect(response.status).toBe(400);
+      expect(await response.json()).toMatchObject({
+        error,
+        issues: expect.any(Array),
+      });
+      expect(service[operation]).not.toHaveBeenCalled();
+    });
+  },
+);
+
+test.each([{}, { status: '' }, { type: ' ' }, { status: 1 }])(
+  'PATCH rejects invalid update body %j',
+  async (body) => {
+    const service = { updateOrder: vi.fn() };
+    await withServer(service, async (url) => {
+      const response = await fetch(`${url}/orders/1`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      expect(response.status).toBe(400);
+      expect(await response.json()).toMatchObject({
+        error: 'Invalid order request',
+        issues: expect.any(Array),
+      });
+      expect(service.updateOrder).not.toHaveBeenCalled();
+    });
+  },
+);
+
+test('PATCH supports updating only the order type', async () => {
+  const order = { orderID: 1, type: 'collection', orderItems: [] };
+  const service = { updateOrder: vi.fn().mockResolvedValue(order) };
+  await withServer(service, async (url) => {
+    const response = await fetch(`${url}/orders/1`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'collection' }),
+    });
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual(order);
+    expect(service.updateOrder).toHaveBeenCalledExactlyOnceWith(1, {
+      type: 'collection',
+    });
+  });
+});
+
+test('POST preserves orders without items and defaults to an empty item list', async () => {
+  const order = { orderID: 1, orderItems: [] };
+  const service = { createOrder: vi.fn().mockResolvedValue(order) };
+  await withServer(service, async (url) => {
+    const response = await fetch(`${url}/orders`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        customerID: 42,
+        status: 'pending',
+        type: 'delivery',
+      }),
+    });
+    expect(response.status).toBe(201);
+    expect(await response.json()).toEqual(order);
+    expect(service.createOrder).toHaveBeenCalledExactlyOnceWith({
+      customerID: 42,
+      status: 'pending',
+      type: 'delivery',
+      orderItems: [],
+    });
+  });
+});
+
+test.each([
+  ['PATCH', 'updateOrder'],
+  ['DELETE', 'delete'],
+])(
+  '%s returns 404 when Prisma cannot find the order',
+  async (method, operation) => {
+    const error = new Prisma.PrismaClientKnownRequestError('Record not found', {
+      code: 'P2025',
+      clientVersion: '7.10.1',
+    });
+    const service = { [operation]: vi.fn().mockRejectedValue(error) };
+    await withServer(service, async (url) => {
+      const response = await fetch(`${url}/orders/1`, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'processing' }),
+      });
+      expect(response.status).toBe(404);
+      expect(await response.json()).toEqual({ error: 'Order not found' });
+    });
+  },
+);
+
+test.each([
+  ['POST', '/orders', 'createOrder'],
+  ['PATCH', '/orders/1', 'updateOrder'],
+  ['DELETE', '/orders/1', 'delete'],
+])(
+  '%s forwards unexpected service errors to Express',
+  async (method, path, operation) => {
+    const service = {
+      [operation]: vi.fn().mockRejectedValue(new Error('Database unavailable')),
+    };
+    await withServer(service, async (url) => {
+      const response = await fetch(`${url}${path}`, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          customerID: 42,
+          status: 'pending',
+          type: 'delivery',
+        }),
+      });
+      expect(response.status).toBe(500);
+      expect(await response.json()).toEqual({
+        error: 'Database unavailable',
+      });
+    });
+  },
+);
+
+test('PATCH does not treat other Prisma errors as missing orders', async () => {
+  const error = new Prisma.PrismaClientKnownRequestError('Constraint failed', {
+    code: 'P2003',
+    clientVersion: '7.10.1',
+  });
+  const service = { updateOrder: vi.fn().mockRejectedValue(error) };
+  await withServer(service, async (url) => {
+    const response = await fetch(`${url}/orders/1`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: 'processing' }),
+    });
+    expect(response.status).toBe(500);
+    expect(await response.json()).toEqual({ error: 'Constraint failed' });
   });
 });
