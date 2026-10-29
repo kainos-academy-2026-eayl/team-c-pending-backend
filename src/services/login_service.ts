@@ -7,7 +7,7 @@ export class LoginService {
   constructor(
     private customerRepository: CustomerRepository,
     private jwtSecret: string,
-  ) { }
+  ) {}
 
   async getCustomerDetailsFromToken(
     token: string,
