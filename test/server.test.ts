@@ -5,16 +5,16 @@ import 'dotenv/config';
 vi.mock('../src/app', () => ({ createApp: vi.fn() }));
 
 describe('server startup', () => {
-  let listen;
-  let close;
-  let signalHandlers;
+  let listen: ReturnType<typeof vi.fn> = vi.fn();
+  let close: ReturnType<typeof vi.fn> = vi.fn();
+  const signalHandlers = new Map<NodeJS.Signals, (...args: never[]) => void>();
 
   beforeEach(() => {
     vi.resetModules();
     vi.stubEnv('PORT', '3000');
-    signalHandlers = new Map();
+    signalHandlers.clear();
     vi.spyOn(process, 'on').mockImplementation((signal, handler) => {
-      signalHandlers.set(signal, handler);
+      signalHandlers.set(signal, () => handler());
       return process;
     });
     vi.spyOn(process, 'exit').mockImplementation(() => {});
@@ -75,7 +75,7 @@ describe('server startup', () => {
     'closes the server on %s',
     async (signal) => {
       await import('../src/index.ts');
-      signalHandlers.get(signal)();
+      signalHandlers.get(signal)?.();
 
       expect(close).toHaveBeenCalledOnce();
       expect(process.exit).toHaveBeenCalledWith(0);
