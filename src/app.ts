@@ -32,18 +32,16 @@ export function createApp(): Express {
 
   app.locals.basketService = new BasketService(new BasketRepository(prisma));
 
-  //health check router
   app.locals.customerService = customerService;
   app.locals.loginService = loginService;
 
   app.use('/', registrationRouter);
   app.use('/', loginRouter);
-  //health check router
   app.use('/', utilityRouter);
   app.use(
     '/products',
     createProductRouter(
-      productService as unknown as Parameters<typeof createProductRouter>[0],
+      productService,
     ),
   );
   app.use('/basket', basketController);

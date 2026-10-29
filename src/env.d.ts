@@ -8,7 +8,7 @@ declare global {
     interface Locals {
       loginService: LoginService;
       customerService: CustomerService;
-      productServer: ProductService;
+      productService: ProductService;
       basketService: BasketService;
     }
   }
