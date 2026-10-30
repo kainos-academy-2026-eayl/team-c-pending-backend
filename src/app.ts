@@ -43,12 +43,7 @@ export function createApp(): Express {
   app.use('/', loginRouter);
   //health check router
   app.use('/', utilityRouter);
-  app.use(
-    '/products',
-    createProductRouter(
-      productService as unknown as Parameters<typeof createProductRouter>[0],
-    ),
-  );
+  app.use('/products', createProductRouter(productService));
   app.use('/basket', basketController);
   app.use('/orders', createOrderRouter(orderService));
 

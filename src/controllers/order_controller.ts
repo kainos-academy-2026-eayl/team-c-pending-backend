@@ -28,7 +28,7 @@ const updateOrderSchema = z
   })
   .refine((data) => data.status !== undefined || data.type !== undefined);
 
-type CustomerResponse = Response<unknown, { customerID: number }>;
+type CustomerResponse = Response<unknown, { customerID: number; }>;
 
 function isRecordNotFound(error: unknown): boolean {
   return (
@@ -38,7 +38,7 @@ function isRecordNotFound(error: unknown): boolean {
 }
 
 export class OrderController {
-  constructor(private orderService: OrderService) {}
+  constructor(private orderService: OrderService) { }
 
   async getAll(res: CustomerResponse): Promise<void> {
     res
@@ -180,7 +180,7 @@ export function createOrderRouter(orderService: OrderService): Router {
       return;
     }
 
-    const loginService = req.app.locals.loginService as LoginService;
+    const loginService: LoginService = req.app.locals.loginService;
     const customerID = await loginService.getCustomerIDFromToken(token);
     if (!customerID) {
       res.status(401).json({ error: 'Invalid or expired token' });

@@ -32,7 +32,7 @@ router.post('/:productID', async (req, res) => {
     return;
   }
 
-  const loginService = req.app.locals.loginService as LoginService;
+  const loginService: LoginService = req.app.locals.loginService;
 
   const token = req.get('Authorization')?.match(/^Bearer\s+(\S+)$/i)?.[1];
   if (!token) {
@@ -46,13 +46,13 @@ router.post('/:productID', async (req, res) => {
     return;
   }
 
-  const basketService = (await req.app.locals.basketService) as BasketService;
+  const basketService: BasketService = req.app.locals.basketService;
   await basketService.updateQuantity(customerID, productID, quantity);
   res.status(200).json(await basketService.getBasket(customerID));
 });
 
 router.get('/', async (req, res) => {
-  const loginService = req.app.locals.loginService as LoginService;
+  const loginService: LoginService = req.app.locals.loginService;
 
   const token = req.get('Authorization')?.match(/^Bearer\s+(\S+)$/i)?.[1];
   if (!token) {
@@ -66,7 +66,7 @@ router.get('/', async (req, res) => {
     return;
   }
 
-  const basketService = (await req.app.locals.basketService) as BasketService;
+  const basketService: BasketService = req.app.locals.basketService;
 
   res.status(200).json(await basketService.getBasket(customerID));
 });

@@ -29,8 +29,8 @@ registrationRouter.post('/register', async (req: Request, res: Response) => {
     return;
   }
 
-  const customerService = req.app.locals.customerService as CustomerService;
-  const loginService = req.app.locals.loginService as LoginService;
+  const customerService: CustomerService = req.app.locals.customerService;
+  const loginService: LoginService = req.app.locals.loginService;
 
   try {
     const customer = await customerService.create(result.data);
