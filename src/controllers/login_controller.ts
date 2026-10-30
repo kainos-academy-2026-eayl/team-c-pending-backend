@@ -12,6 +12,7 @@ loginRouter.get('/me', async (req: Request, res: Response) => {
   }
 
   const loginService = req.app.locals.loginService;
+  const basketService = req.app.locals.basketService;
   const customerName = await loginService.getCustomerDetailsFromToken(
     token,
     basketService,
