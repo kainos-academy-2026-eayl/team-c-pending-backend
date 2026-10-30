@@ -1,7 +1,15 @@
 import type { Order, Prisma } from '../generated/prisma/client';
 import prisma from '../prismaClient';
 
-const orderInclude = { orderItems: true } satisfies Prisma.OrderInclude;
+const orderInclude = {
+  orderItems: {
+    include: {
+      product: {
+        select: { productID: true, name: true, image: true },
+      },
+    },
+  },
+} satisfies Prisma.OrderInclude;
 
 export type OrderWithItems = Prisma.OrderGetPayload<{
   include: typeof orderInclude;

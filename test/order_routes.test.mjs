@@ -72,7 +72,17 @@ test('order routes expose CRUD operations through the service', async () => {
     customerID: 42,
     status: 'pending',
     type: 'delivery',
-    orderItems: [],
+    orderItems: [
+      {
+        orderItemID: 10,
+        orderID: 1,
+        productID: 7,
+        quantity: 2,
+        unitPrice: 4.5,
+        itemStatus: 'active',
+        product: { productID: 7, name: 'Apple', image: '/apple.png' },
+      },
+    ],
   };
   const orderService = {
     findOrdersByCustomerID: vi.fn().mockResolvedValue([order]),
