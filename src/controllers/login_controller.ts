@@ -1,7 +1,5 @@
 import { type Request, type Response, Router } from 'express';
 import { z } from 'zod';
-import type BasketService from '../services/basket_service';
-import type { LoginService } from '../services/login_service';
 
 const loginRouter = Router();
 
@@ -13,8 +11,7 @@ loginRouter.get('/me', async (req: Request, res: Response) => {
     return;
   }
 
-  const loginService: LoginService = req.app.locals.loginService;
-  const basketService: BasketService = req.app.locals.basketService;
+  const loginService = req.app.locals.loginService;
   const customerName = await loginService.getCustomerDetailsFromToken(
     token,
     basketService,
@@ -44,7 +41,7 @@ loginRouter.post('/login', async (req: Request, res: Response) => {
     return;
   }
 
-  const loginService: LoginService = req.app.locals.loginService;
+  const loginService = req.app.locals.loginService;
   const token = await loginService.login(
     result.data.email,
     result.data.password,

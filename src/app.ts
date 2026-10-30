@@ -1,3 +1,5 @@
+/// <reference path="env.d.ts" />
+
 import express, { type Express } from 'express';
 import 'dotenv/config';
 import basketController from './controllers/basket_controller';
@@ -35,13 +37,11 @@ export function createApp(): Express {
 
   app.locals.basketService = new BasketService(new BasketRepository(prisma));
 
-  //health check router
   app.locals.customerService = customerService;
   app.locals.loginService = loginService;
 
   app.use('/', registrationRouter);
   app.use('/', loginRouter);
-  //health check router
   app.use('/', utilityRouter);
   app.use('/products', createProductRouter(productService));
   app.use('/basket', basketController);
