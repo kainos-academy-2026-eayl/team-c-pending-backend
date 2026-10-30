@@ -28,7 +28,7 @@ const updateOrderSchema = z
   })
   .refine((data) => data.status !== undefined || data.type !== undefined);
 
-type CustomerResponse = Response<unknown, { customerID: number }>;
+type CustomerResponse = Response<unknown, { customerID: number; }>;
 
 function isRecordNotFound(error: unknown): boolean {
   return (
@@ -38,7 +38,7 @@ function isRecordNotFound(error: unknown): boolean {
 }
 
 export class OrderController {
-  constructor(private orderService: OrderService) {}
+  constructor(private orderService: OrderService) { }
 
   async getAll(res: CustomerResponse): Promise<void> {
     res

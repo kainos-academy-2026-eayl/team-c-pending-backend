@@ -4,9 +4,7 @@ import prisma from '../prismaClient';
 const orderInclude = {
   orderItems: {
     include: {
-      product: {
-        select: { productID: true, name: true, image: true },
-      },
+      product: true,
     },
   },
 } satisfies Prisma.OrderInclude;
@@ -65,9 +63,9 @@ export class OrderRepository {
         requestedProductIDs.length === 0
           ? []
           : await transaction.product.findMany({
-              where: { productID: { in: requestedProductIDs } },
-              select: { productID: true, price: true },
-            });
+            where: { productID: { in: requestedProductIDs } },
+            select: { productID: true, price: true },
+          });
       const productPrices = new Map(
         products.map(({ productID, price }) => [productID, price]),
       );

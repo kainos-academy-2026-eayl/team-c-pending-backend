@@ -8,7 +8,7 @@ import type {
 export { OrderProductsNotFoundError } from '../prisma_repo/order_repository';
 
 export default class OrderService {
-  constructor(private orderRepository: OrderRepository) {}
+  constructor(private orderRepository: OrderRepository) { }
 
   findOrdersByCustomerID(customerID: number): Promise<OrderWithItems[]> {
     return this.orderRepository.findOrdersByCustomerID(customerID);
