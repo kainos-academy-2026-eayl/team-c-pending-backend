@@ -66,19 +66,6 @@ test('order routes reject missing and invalid bearer tokens', async () => {
   );
 });
 
-test('customers cannot list another customer orders', async () => {
-  const service = { findOrdersByCustomerID: vi.fn() };
-
-  await withServer(service, async (url) => {
-    const response = await fetch(`${url}/orders/customer/99`);
-    expect(response.status).toBe(403);
-    expect(await response.json()).toEqual({
-      error: "Cannot access another customer's orders",
-    });
-    expect(service.findOrdersByCustomerID).not.toHaveBeenCalled();
-  });
-});
-
 test('order routes expose CRUD operations through the service', async () => {
   const order = {
     orderID: 1,
@@ -99,10 +86,6 @@ test('order routes expose CRUD operations through the service', async () => {
     const allResponse = await fetch(`${url}/orders`);
     expect(allResponse.status).toBe(200);
     expect(await allResponse.json()).toEqual([order]);
-
-    const customerResponse = await fetch(`${url}/orders/customer/42`);
-    expect(customerResponse.status).toBe(200);
-    expect(await customerResponse.json()).toEqual([order]);
 
     const byIDResponse = await fetch(`${url}/orders/1`);
     expect(byIDResponse.status).toBe(200);
@@ -149,7 +132,6 @@ test('order routes expose CRUD operations through the service', async () => {
     expect(orderService.delete).toHaveBeenCalledExactlyOnceWith(1, 42);
     expect(orderService.findOrderByID).toHaveBeenCalledExactlyOnceWith(1, 42);
     expect(orderService.findOrdersByCustomerID).toHaveBeenNthCalledWith(1, 42);
-    expect(orderService.findOrdersByCustomerID).toHaveBeenNthCalledWith(2, 42);
   });
 });
 
@@ -218,12 +200,6 @@ test('order route rejects items referring to unknown products', async () => {
 });
 
 test.each([
-  [
-    'GET',
-    '/orders/customer/0',
-    'findOrdersByCustomerID',
-    'Invalid customer ID',
-  ],
   ['GET', '/orders/invalid', 'findOrderByID', 'Invalid order ID'],
   ['PATCH', '/orders/2147483648', 'updateOrder', 'Invalid order ID'],
   ['DELETE', '/orders/-1', 'delete', 'Invalid order ID'],

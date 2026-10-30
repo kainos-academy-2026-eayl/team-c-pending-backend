@@ -9,10 +9,6 @@ const orderIDParamsSchema = z.object({
   orderID: z.coerce.number().int().positive().max(2147483647),
 });
 
-const customerIDParamsSchema = z.object({
-  customerID: z.coerce.number().int().positive().max(2147483647),
-});
-
 const orderItemSchema = z.object({
   productID: z.number().int().positive().max(2147483647),
   quantity: z.number().int().positive().max(2147483647),
@@ -45,30 +41,6 @@ export class OrderController {
   constructor(private orderService: OrderService) {}
 
   async getAll(res: CustomerResponse): Promise<void> {
-    res
-      .status(200)
-      .json(
-        await this.orderService.findOrdersByCustomerID(res.locals.customerID),
-      );
-  }
-
-  async getByCustomerID(req: Request, res: CustomerResponse): Promise<void> {
-    const result = customerIDParamsSchema.safeParse(req.params);
-    if (!result.success) {
-      res.status(400).json({
-        error: 'Invalid customer ID',
-        issues: result.error.issues,
-      });
-      return;
-    }
-
-    if (result.data.customerID !== res.locals.customerID) {
-      res
-        .status(403)
-        .json({ error: "Cannot access another customer's orders" });
-      return;
-    }
-
     res
       .status(200)
       .json(
@@ -220,9 +192,6 @@ export function createOrderRouter(orderService: OrderService): Router {
   });
 
   router.get('/', (_req, res: CustomerResponse) => controller.getAll(res));
-  router.get('/customer/:customerID', (req, res: CustomerResponse) =>
-    controller.getByCustomerID(req, res),
-  );
   router.get('/:orderID', (req, res: CustomerResponse) =>
     controller.getByID(req, res),
   );
