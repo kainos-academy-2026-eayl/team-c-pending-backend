@@ -13,6 +13,7 @@ model Customer {
   lastName      String
   email         String        @unique
   password      String
+  role          String
   basketEntries BasketEntry[]
   orders        Order[]
 }
@@ -36,7 +37,7 @@ model Order {
   customerID    Int
   status        String         @default("pending")
   date          DateTime       @default(now())
-  type          String  
+  type          String
   customer      Customer       @relation(fields: [customerID], references: [customerID])
   productOrders ProductOrder[]
 
@@ -56,12 +57,12 @@ model ProductOrder {
 model OrderItem {
   orderItemID Int @id @default(autoincrement())
 
-  orderID      Int
-  productID    Int
+  orderID   Int
+  productID Int
 
-  quantity     Int
-  unitPrice    Float
-  itemStatus   String @default("active")
+  quantity   Int
+  unitPrice  Float
+  itemStatus String @default("active")
 
   order   Order   @relation(fields: [orderID], references: [orderID])
   product Product @relation(fields: [productID], references: [productID])

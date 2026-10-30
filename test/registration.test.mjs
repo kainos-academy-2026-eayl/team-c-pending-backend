@@ -39,6 +39,7 @@ test('registration rejects invalid request bodies', async () => {
         firstName: 'Test',
         lastName: 'Customer',
         email: 'invalid',
+        role: 'customer',
         password: '',
       }),
     });
@@ -51,6 +52,36 @@ test('registration rejects invalid request bodies', async () => {
   });
 });
 
+test.each([undefined, '', '   '])(
+  'registration rejects a missing or blank role: %j',
+  async (role) => {
+    const customerService = { create: vi.fn() };
+
+    await withRegistrationServer(customerService, async (url) => {
+      const response = await fetch(`${url}/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          firstName: 'Test',
+          lastName: 'Customer',
+          email: 'test@example.com',
+          role,
+          password: 'submitted-password',
+        }),
+      });
+
+      expect(response.status).toBe(400);
+      expect(await response.json()).toMatchObject({
+        error: 'Invalid registration request',
+        issues: expect.arrayContaining([
+          expect.objectContaining({ path: ['role'] }),
+        ]),
+      });
+      expect(customerService.create).not.toHaveBeenCalled();
+    });
+  },
+);
+
 test('registration creates a customer and returns an access token', async () => {
   const customerService = {
     create: vi.fn().mockResolvedValue({
@@ -58,6 +89,7 @@ test('registration creates a customer and returns an access token', async () => 
       firstName: 'Test',
       lastName: 'Customer',
       email: 'test@example.com',
+      role: 'customer',
       password: 'hashed-password',
     }),
   };
@@ -70,6 +102,7 @@ test('registration creates a customer and returns an access token', async () => 
         firstName: ' Test ',
         lastName: 'Customer',
         email: 'test@example.com',
+        role: ' customer ',
         password: 'submitted-password',
       }),
     });
@@ -80,6 +113,7 @@ test('registration creates a customer and returns an access token', async () => 
       firstName: 'Test',
       lastName: 'Customer',
       email: 'test@example.com',
+      role: 'customer',
       accessToken: 'signed-token',
       tokenType: 'Bearer',
       expiresIn: 3600,
@@ -88,6 +122,7 @@ test('registration creates a customer and returns an access token', async () => 
       firstName: 'Test',
       lastName: 'Customer',
       email: 'test@example.com',
+      role: 'customer',
       password: 'submitted-password',
     });
   });
@@ -114,6 +149,7 @@ test('registration returns conflict when the email is already registered', async
         firstName: 'Test',
         lastName: 'Customer',
         email: 'test@example.com',
+        role: 'customer',
         password: 'submitted-password',
       }),
     });
@@ -149,6 +185,7 @@ test.each([
           firstName: 'Test',
           lastName: 'Customer',
           email: 'test@example.com',
+          role: 'customer',
           password: 'submitted-password',
         }),
       });
