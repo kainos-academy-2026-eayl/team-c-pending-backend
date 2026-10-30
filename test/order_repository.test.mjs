@@ -22,9 +22,7 @@ import prisma from '../src/prismaClient.ts';
 const orderInclude = {
   orderItems: {
     include: {
-      product: {
-        select: { productID: true, name: true, image: true },
-      },
+      product: true,
     },
   },
 };
