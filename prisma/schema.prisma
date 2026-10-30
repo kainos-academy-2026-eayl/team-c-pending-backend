@@ -18,7 +18,7 @@ model Customer {
 }
 
 model Product {
-  productID     Int            @id @default(autoincrement())
+  productID     Int           @id @default(autoincrement())
   name          String
   price         Float
   description   String
@@ -26,42 +26,28 @@ model Product {
   quantity      Int
   image         String?
   basketEntries BasketEntry[]
-  productOrders ProductOrder[]
-
-  orderItems OrderItem[]
+  orderItems    OrderItem[]
 }
 
 model Order {
-  orderID       Int            @id @default(autoincrement())
-  customerID    Int
-  status        String         @default("pending")
-  date          DateTime       @default(now())
-  type          String  
-  customer      Customer       @relation(fields: [customerID], references: [customerID])
-  productOrders ProductOrder[]
-
+  orderID    Int         @id @default(autoincrement())
+  customerID Int
+  status     String      @default("pending")
+  date       DateTime    @default(now())
+  type       String
+  customer   Customer    @relation(fields: [customerID], references: [customerID])
   orderItems OrderItem[]
-}
-
-model ProductOrder {
-  ProductID Int
-  OrderID   Int
-  Quantity  Int
-  product   Product @relation(fields: [ProductID], references: [productID])
-  order     Order   @relation(fields: [OrderID], references: [orderID])
-
-  @@id([ProductID, OrderID])
 }
 
 model OrderItem {
   orderItemID Int @id @default(autoincrement())
 
-  orderID      Int
-  productID    Int
+  orderID   Int
+  productID Int
 
-  quantity     Int
-  unitPrice    Float
-  itemStatus   String @default("active")
+  quantity   Int
+  unitPrice  Float
+  itemStatus String @default("active")
 
   order   Order   @relation(fields: [orderID], references: [orderID])
   product Product @relation(fields: [productID], references: [productID])

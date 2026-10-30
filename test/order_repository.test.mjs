@@ -11,7 +11,6 @@ vi.mock('../src/prismaClient.ts', () => ({
       delete: vi.fn(),
     },
     product: { findMany: vi.fn() },
-    productOrder: { deleteMany: vi.fn() },
     orderItem: { deleteMany: vi.fn() },
     $transaction: vi.fn(),
   },
@@ -27,7 +26,6 @@ const transaction = {
     delete: vi.fn(),
   },
   product: { findMany: vi.fn() },
-  productOrder: { deleteMany: vi.fn() },
   orderItem: { deleteMany: vi.fn() },
 };
 
@@ -177,9 +175,6 @@ test('delete removes OrderItems before deleting their order atomically', async (
   });
   expect(transaction.orderItem.deleteMany).toHaveBeenCalledWith({
     where: { orderID: 1 },
-  });
-  expect(transaction.productOrder.deleteMany).toHaveBeenCalledWith({
-    where: { OrderID: 1 },
   });
   expect(transaction.order.delete).toHaveBeenCalledWith({
     where: { orderID: 1 },

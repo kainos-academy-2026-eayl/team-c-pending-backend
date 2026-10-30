@@ -112,9 +112,6 @@ export class OrderRepository {
       });
 
       await transaction.orderItem.deleteMany({ where: { orderID } });
-      await transaction.productOrder.deleteMany({
-        where: { OrderID: orderID },
-      });
       await transaction.order.delete({ where: { orderID } });
 
       return order;
