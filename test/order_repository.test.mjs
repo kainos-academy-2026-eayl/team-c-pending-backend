@@ -42,20 +42,15 @@ test('order reads include their OrderItem records', async () => {
   prisma.order.findMany.mockResolvedValue(orders);
   prisma.order.findUnique.mockResolvedValue(orders[0]);
 
-  await expect(repository.findManyOrders()).resolves.toBe(orders);
-  expect(prisma.order.findMany).toHaveBeenCalledWith({
-    include: { orderItems: true },
-  });
-
   await expect(repository.findOrdersByCustomerID(42)).resolves.toBe(orders);
   expect(prisma.order.findMany).toHaveBeenLastCalledWith({
     where: { customerID: 42 },
     include: { orderItems: true },
   });
 
-  await expect(repository.findOrderByID(1)).resolves.toBe(orders[0]);
+  await expect(repository.findOrderByID(1, 42)).resolves.toBe(orders[0]);
   expect(prisma.order.findUnique).toHaveBeenCalledWith({
-    where: { orderID: 1 },
+    where: { orderID: 1, customerID: 42 },
     include: { orderItems: true },
   });
 });
@@ -154,17 +149,17 @@ test('create order rejects an unavailable product price before writing', async (
   });
   expect(transaction.order.create).not.toHaveBeenCalled();
 });
-test('update uses the schema customerID spelling', async () => {
+test('update scopes the order to its customer', async () => {
   const order = { orderID: 1, customerID: 43 };
   prisma.order.update.mockResolvedValue(order);
   const repository = new OrderRepository();
 
-  await expect(repository.updateOrder(1, { customerID: 43 })).resolves.toBe(
-    order,
-  );
+  await expect(
+    repository.updateOrder(1, { status: 'processing' }, 42),
+  ).resolves.toBe(order);
   expect(prisma.order.update).toHaveBeenCalledWith({
-    where: { orderID: 1 },
-    data: { customerID: 43 },
+    where: { orderID: 1, customerID: 42 },
+    data: { status: 'processing' },
     include: { orderItems: true },
   });
 });
@@ -174,10 +169,10 @@ test('delete removes OrderItems before deleting their order atomically', async (
   transaction.order.findUniqueOrThrow.mockResolvedValue(order);
   const repository = new OrderRepository();
 
-  await expect(repository.delete(1)).resolves.toBe(order);
+  await expect(repository.delete(1, 42)).resolves.toBe(order);
 
   expect(transaction.order.findUniqueOrThrow).toHaveBeenCalledWith({
-    where: { orderID: 1 },
+    where: { orderID: 1, customerID: 42 },
     include: { orderItems: true },
   });
   expect(transaction.orderItem.deleteMany).toHaveBeenCalledWith({

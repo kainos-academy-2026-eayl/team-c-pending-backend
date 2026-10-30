@@ -31,10 +31,6 @@ export class OrderProductsNotFoundError extends Error {
 }
 
 export class OrderRepository {
-  findManyOrders(): Promise<OrderWithItems[]> {
-    return prisma.order.findMany({ include: orderInclude });
-  }
-
   findOrdersByCustomerID(customerID: number): Promise<OrderWithItems[]> {
     return prisma.order.findMany({
       where: { customerID },
@@ -42,9 +38,12 @@ export class OrderRepository {
     });
   }
 
-  findOrderByID(orderID: number): Promise<OrderWithItems | null> {
+  findOrderByID(
+    orderID: number,
+    customerID: number,
+  ): Promise<OrderWithItems | null> {
     return prisma.order.findUnique({
-      where: { orderID },
+      where: { orderID, customerID },
       include: orderInclude,
     });
   }
@@ -96,18 +95,19 @@ export class OrderRepository {
   updateOrder(
     orderID: number,
     updateData: UpdateOrderData,
+    customerID: number,
   ): Promise<OrderWithItems> {
     return prisma.order.update({
-      where: { orderID },
+      where: { orderID, customerID },
       data: updateData,
       include: orderInclude,
     });
   }
 
-  delete(orderID: number): Promise<OrderWithItems> {
+  delete(orderID: number, customerID: number): Promise<OrderWithItems> {
     return prisma.$transaction(async (transaction) => {
       const order = await transaction.order.findUniqueOrThrow({
-        where: { orderID },
+        where: { orderID, customerID },
         include: orderInclude,
       });
 
