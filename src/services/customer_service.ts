@@ -21,12 +21,12 @@ export class CustomerService {
     lastName: string;
     email: string;
     password: string;
-    role: string;
   }): Promise<Customer> {
     const hashedPassword = await hash(data.password, 12);
 
     return this.CustomerRepository.create({
       ...data,
+      role: 'customer',
       password: hashedPassword,
     });
   }

@@ -22,8 +22,8 @@ beforeEach(() => {
   vi.spyOn(console, 'error').mockImplementation(() => {});
   prisma.customer.findFirst.mockResolvedValue({ customerID: 42 });
   prisma.product.findMany.mockResolvedValue([
-    { productID: 7 },
-    { productID: 12 },
+    { productID: 7, price: 4.5 },
+    { productID: 12, price: 8.25 },
   ]);
   prisma.$transaction.mockResolvedValue([
     { orderID: 101 },
@@ -53,11 +53,11 @@ test('seed creates linked orders using existing IDs in one transaction', async (
     'collection',
     'delivery',
   ]);
-  expect(orders.flatMap((order) => order.productOrders.create)).toEqual([
-    { ProductID: 7, Quantity: 2 },
-    { ProductID: 12, Quantity: 1 },
-    { ProductID: 12, Quantity: 3 },
-    { ProductID: 7, Quantity: 1 },
+  expect(orders.flatMap((order) => order.orderItems.create)).toEqual([
+    { productID: 7, quantity: 2, unitPrice: 4.5 },
+    { productID: 12, quantity: 1, unitPrice: 8.25 },
+    { productID: 12, quantity: 3, unitPrice: 8.25 },
+    { productID: 7, quantity: 1, unitPrice: 4.5 },
   ]);
   expect(prisma.$transaction).toHaveBeenCalledOnce();
   expect(console.log).toHaveBeenCalledWith(expect.any(String), [101, 102, 103]);
@@ -66,9 +66,15 @@ test('seed creates linked orders using existing IDs in one transaction', async (
 });
 
 test.each([
-  [null, [{ productID: 7 }, { productID: 12 }]],
+  [
+    null,
+    [
+      { productID: 7, price: 4.5 },
+      { productID: 12, price: 8.25 },
+    ],
+  ],
   [{ customerID: 42 }, []],
-  [{ customerID: 42 }, [{ productID: 7 }]],
+  [{ customerID: 42 }, [{ productID: 7, price: 4.5 }]],
 ])('seed rejects missing prerequisite records', async (customer, products) => {
   prisma.customer.findFirst.mockResolvedValue(customer);
   prisma.product.findMany.mockResolvedValue(products);

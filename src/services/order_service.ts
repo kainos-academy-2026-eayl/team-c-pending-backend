@@ -10,16 +10,15 @@ export { OrderProductsNotFoundError } from '../prisma_repo/order_repository';
 export default class OrderService {
   constructor(private orderRepository: OrderRepository) {}
 
-  findManyOrders(): Promise<OrderWithItems[]> {
-    return this.orderRepository.findManyOrders();
-  }
-
   findOrdersByCustomerID(customerID: number): Promise<OrderWithItems[]> {
     return this.orderRepository.findOrdersByCustomerID(customerID);
   }
 
-  findOrderByID(orderID: number): Promise<OrderWithItems | null> {
-    return this.orderRepository.findOrderByID(orderID);
+  findOrderByID(
+    orderID: number,
+    customerID: number,
+  ): Promise<OrderWithItems | null> {
+    return this.orderRepository.findOrderByID(orderID, customerID);
   }
 
   createOrder(data: CreateOrderData): Promise<OrderWithItems> {
@@ -29,11 +28,12 @@ export default class OrderService {
   updateOrder(
     orderID: number,
     updateData: UpdateOrderData,
+    customerID: number,
   ): Promise<OrderWithItems> {
-    return this.orderRepository.updateOrder(orderID, updateData);
+    return this.orderRepository.updateOrder(orderID, updateData, customerID);
   }
 
-  delete(orderID: number): Promise<OrderWithItems> {
-    return this.orderRepository.delete(orderID);
+  delete(orderID: number, customerID: number): Promise<OrderWithItems> {
+    return this.orderRepository.delete(orderID, customerID);
   }
 }
