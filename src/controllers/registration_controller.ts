@@ -10,7 +10,6 @@ const registrationSchema = z.object({
   firstName: z.string().trim().min(1),
   lastName: z.string().trim().min(1),
   email: z.email(),
-  role: z.string().trim().min(1),
   password: z
     .string()
     .min(1)
@@ -41,7 +40,6 @@ registrationRouter.post('/register', async (req: Request, res: Response) => {
       firstName: customer.firstName,
       lastName: customer.lastName,
       email: customer.email,
-      role: customer.role,
       accessToken: loginService.issueToken(customer.customerID),
       tokenType: 'Bearer',
       expiresIn: 3600,
