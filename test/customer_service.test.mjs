@@ -91,6 +91,7 @@ test('customer service delegates its operations to the repository', async () => 
   );
   expect(repository.create).toHaveBeenCalledExactlyOnceWith({
     ...data,
+    role: 'customer',
     password: expect.any(String),
   });
   const storedPassword = repository.create.mock.calls[0][0].password;
