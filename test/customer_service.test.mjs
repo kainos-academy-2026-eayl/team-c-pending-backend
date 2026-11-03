@@ -1,8 +1,12 @@
 import { compare, getRounds } from 'bcryptjs';
 import { expect, test, vi } from 'vitest';
 
-vi.mock('../src/prismaClient.ts', () => ({
-  default: {
+vi.mock('../src/prismaClient.ts', () => {
+  const prismaMock = {
+    $transaction: vi.fn(),
+    orderItem: { deleteMany: vi.fn() },
+    order: { deleteMany: vi.fn() },
+    basketEntry: { deleteMany: vi.fn() },
     customer: {
       findMany: vi.fn(),
       findUnique: vi.fn(),
@@ -10,8 +14,13 @@ vi.mock('../src/prismaClient.ts', () => ({
       update: vi.fn(),
       delete: vi.fn(),
     },
-  },
-}));
+  };
+  prismaMock.$transaction.mockImplementation((callback) =>
+    callback(prismaMock),
+  );
+
+  return { default: prismaMock };
+});
 
 import { CustomerController } from '../src/controllers/customer_controller.ts';
 import { CustomerRepository } from '../src/prisma_repo/customer_repository.ts';

@@ -255,8 +255,14 @@ test.each([0, -1])(
   },
 );
 
-test('basket repository retrieves entries with their product and omits customer ID', async () => {
-  const entries = [{ productID: 42, quantity: 3 }];
+test('basket repository keeps hidden products and omits customer ID', async () => {
+  const entries = [
+    {
+      productID: 42,
+      quantity: 3,
+      product: { productID: 42, name: 'Hidden product', hide: true },
+    },
+  ];
   const prisma = {
     basketEntry: {
       findMany: vi.fn().mockResolvedValue(entries),

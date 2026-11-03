@@ -64,6 +64,13 @@ export class CustomerRepository {
   }
   // deletes customer from database
   delete(customerID: number): Promise<Customer> {
-    return prisma.customer.delete({ where: { customerID } });
+    return prisma.$transaction(async (transaction) => {
+      await transaction.orderItem.deleteMany({
+        where: { order: { customerID } },
+      });
+      await transaction.order.deleteMany({ where: { customerID } });
+      await transaction.basketEntry.deleteMany({ where: { customerID } });
+      return transaction.customer.delete({ where: { customerID } });
+    });
   }
 }

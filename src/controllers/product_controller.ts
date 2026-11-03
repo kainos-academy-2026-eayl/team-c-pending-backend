@@ -1,6 +1,8 @@
 import { type Request, type Response, Router } from 'express';
 import { z } from 'zod';
+import { requireAdmin } from '../AdminCheck/require_admin';
 import type { Product } from '../generated/prisma/browser';
+import { Prisma } from '../generated/prisma/client';
 import prisma from '../prismaClient';
 
 const categoryQuerySchema = z.object({
@@ -20,13 +22,36 @@ const createProductSchema = z.object({
   image: z.string().nullable().optional(),
 });
 
+const updateProductSchema = createProductSchema
+  .extend({ hide: z.boolean() })
+  .partial()
+  .refine((data) => Object.keys(data).length > 0, {
+    message: 'At least one product field must be provided',
+  });
+
 interface ProductService {
   findAll(): Promise<Product[]>;
+  findAllForAdmin(): Promise<Product[]>;
   findByCategory(category: string): Promise<Product[]>;
   create(
     data: Pick<
       Product,
       'name' | 'price' | 'description' | 'category' | 'quantity' | 'image'
+    >,
+  ): Promise<Product>;
+  update(
+    productID: number,
+    data: Partial<
+      Pick<
+        Product,
+        | 'name'
+        | 'price'
+        | 'description'
+        | 'category'
+        | 'quantity'
+        | 'image'
+        | 'hide'
+      >
     >,
   ): Promise<Product>;
 }
@@ -35,8 +60,13 @@ interface ProductService {
 export class ProductController {
   constructor(private productService: ProductService) {}
 
+  async getAdminProducts(res: Response): Promise<void> {
+    res.json(await this.productService.findAllForAdmin());
+  }
+
   async getProductCategories(res: Response): Promise<void> {
     const categories = await prisma.product.findMany({
+      where: { hide: false },
       distinct: ['category'],
       select: { category: true },
     });
@@ -139,6 +169,44 @@ export class ProductController {
     });
     res.json('All okay');
   }
+
+  async updateProduct(req: Request, res: Response): Promise<void> {
+    const idResult = productIDParamsSchema.safeParse(req.params);
+    if (!idResult.success) {
+      res.status(400).json({
+        error: 'Invalid product id',
+        issues: idResult.error.issues,
+      });
+      return;
+    }
+
+    const dataResult = updateProductSchema.safeParse(req.body);
+    if (!dataResult.success) {
+      res.status(400).json({
+        error: 'Invalid product request',
+        issues: dataResult.error.issues,
+      });
+      return;
+    }
+
+    try {
+      const product = await this.productService.update(
+        idResult.data.productID,
+        dataResult.data,
+      );
+      res.json(product);
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2025'
+      ) {
+        res.status(404).json({ error: 'Product not found' });
+        return;
+      }
+      throw error;
+    }
+  }
+
   findByProductID(productID: number): Promise<Product | null> {
     return prisma.product.findUnique({
       where: { productID },
@@ -151,13 +219,27 @@ export function createProductRouter(productService: ProductService): Router {
   const controller = new ProductController(productService);
 
   router.get('/', (_req, res) => controller.getAllProducts(res));
+  router.get('/admin', requireAdmin, (_req, res) =>
+    controller.getAdminProducts(res),
+  );
   router.get('/category', (req, res) =>
     controller.getByProductCategory(req, res),
   );
   router.get('/categories', (_req, res) =>
     controller.getProductCategories(res),
   );
-  router.post('/', (req, res) => controller.createProduct(req, res));
+  router.post('/', requireAdmin, (req, res) =>
+    controller.createProduct(req, res),
+  );
+  router.patch('/:productID', requireAdmin, (req, res) =>
+    controller.updateProduct(req, res),
+  );
+  router.delete('/:productID', requireAdmin, (_req, res) => {
+    res.set('Allow', 'PATCH').status(405).json({
+      error:
+        'Products cannot be deleted. Update hide to hide or show a product.',
+    });
+  });
   router.get('/:productID/in-stock', (req, res) =>
     controller.getIsInStock(req, res),
   );

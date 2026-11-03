@@ -8,6 +8,10 @@ export class ProductService {
     return this.productRepository.findMany();
   }
 
+  findAllForAdmin(): Promise<Product[]> {
+    return this.productRepository.findManyForAdmin();
+  }
+
   async findByID(productID: number): Promise<Product | null> {
     return this.productRepository.findByID(productID);
   }
@@ -25,5 +29,23 @@ export class ProductService {
     return this.productRepository.create({
       ...data,
     });
+  }
+
+  update(
+    productID: number,
+    data: Partial<
+      Pick<
+        Product,
+        | 'name'
+        | 'price'
+        | 'description'
+        | 'category'
+        | 'quantity'
+        | 'image'
+        | 'hide'
+      >
+    >,
+  ): Promise<Product> {
+    return this.productRepository.update(productID, data);
   }
 }

@@ -6,6 +6,14 @@ import { createCustomerRouter } from '../src/controllers/customer_controller.ts'
 async function withServer(customerService, run) {
   const app = express();
   app.use(express.json());
+  app.locals.loginService = {
+    getCustomerDetailsFromToken: vi.fn().mockImplementation(async (token) => {
+      if (token === 'non-admin-token') return { role: 'customer' };
+      if (token === 'capital-admin-token') return { role: 'Admin' };
+      return { role: 'admin' };
+    }),
+  };
+  app.locals.basketService = {};
   app.use('/customers', createCustomerRouter(customerService));
   app.use((error, _req, res, _next) => {
     res.status(500).json({ error: error.message });
@@ -33,7 +41,9 @@ test('GET /customers returns only public customer fields', async () => {
   const service = { findAll: vi.fn().mockResolvedValue([customer]) };
 
   await withServer(service, async (url) => {
-    const response = await fetch(`${url}/customers`);
+    const response = await fetch(`${url}/customers`, {
+      headers: { Authorization: 'Bearer test-admin-token' },
+    });
 
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual([
@@ -62,13 +72,41 @@ test('POST /customers preserves the existing creation response', async () => {
   await withServer(service, async (url) => {
     const response = await fetch(`${url}/customers`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        Authorization: 'Bearer test-admin-token',
+        'Content-Type': 'application/json',
+      },
       body: JSON.stringify(data),
     });
 
     expect(response.status).toBe(200);
     expect(await response.json()).toBe('All okay');
     expect(service.create).toHaveBeenCalledExactlyOnceWith(data);
+  });
+});
+
+test('PATCH /customers/:customerID updates customer details', async () => {
+  const changes = {
+    firstName: 'Updated',
+    lastName: 'Customer',
+    email: 'updated@example.com',
+  };
+  const customer = { customerID: 1, ...changes, role: 'customer' };
+  const service = { update: vi.fn().mockResolvedValue(customer) };
+
+  await withServer(service, async (url) => {
+    const response = await fetch(`${url}/customers/1`, {
+      method: 'PATCH',
+      headers: {
+        Authorization: 'Bearer test-admin-token',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(changes),
+    });
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual(customer);
+    expect(service.update).toHaveBeenCalledExactlyOnceWith(1, changes);
   });
 });
 
@@ -84,9 +122,13 @@ test.each(['GET', 'POST'])(
     await withServer(service, async (url) => {
       const response = await fetch(`${url}/customers`, {
         method,
+        headers: { Authorization: 'Bearer test-admin-token' },
         ...(method === 'POST'
           ? {
-              headers: { 'Content-Type': 'application/json' },
+              headers: {
+                Authorization: 'Bearer test-admin-token',
+                'Content-Type': 'application/json',
+              },
               body: JSON.stringify({
                 firstname: 'Test',
                 lastname: 'Customer',
@@ -102,3 +144,32 @@ test.each(['GET', 'POST'])(
     });
   },
 );
+
+test('GET /customers rejects users without admin access', async () => {
+  const service = { findAll: vi.fn() };
+
+  await withServer(service, async (url) => {
+    const missingToken = await fetch(`${url}/customers`);
+    expect(missingToken.status).toBe(401);
+
+    const customerToken = await fetch(`${url}/customers`, {
+      headers: { Authorization: 'Bearer non-admin-token' },
+    });
+    expect(customerToken.status).toBe(403);
+    expect(service.findAll).not.toHaveBeenCalled();
+  });
+});
+
+test('GET /customers accepts admin roles regardless of capitalization', async () => {
+  const service = { findAll: vi.fn().mockResolvedValue([]) };
+
+  await withServer(service, async (url) => {
+    const response = await fetch(`${url}/customers`, {
+      headers: { Authorization: 'Bearer capital-admin-token' },
+    });
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual([]);
+    expect(service.findAll).toHaveBeenCalledOnce();
+  });
+});
