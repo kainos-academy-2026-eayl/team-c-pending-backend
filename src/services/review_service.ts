@@ -1,14 +1,14 @@
-import type { Review } from "../generated/prisma/client";
-import type ReviewRepository from "../prisma_repo/review_repository";
+import type { Review } from '../generated/prisma/client';
+import type ReviewRepository from '../prisma_repo/review_repository';
 
 export default class ReviewService {
-    constructor(private reviewRepository: ReviewRepository) {}
+  constructor(private reviewRepository: ReviewRepository) {}
 
-    findByProductID(productID: number) {
-        return this.reviewRepository.findByProductID(productID);
-    }
+  findByProductID(productID: number) {
+    return this.reviewRepository.findByProductID(productID);
+  }
 
-    create(review: Review) {
-        return this.reviewRepository.create(review);
-    }
+  create(review: Review) {
+    return this.reviewRepository.create(review);
+  }
 }
