@@ -110,6 +110,31 @@ test('PATCH /customers/:customerID updates customer details', async () => {
   });
 });
 
+test.each([
+  ['/customers/not-a-number', { firstName: 'Updated' }],
+  ['/customers/1', {}],
+])('PATCH %s rejects invalid customer updates', async (path, body) => {
+  const service = { update: vi.fn() };
+
+  await withServer(service, async (url) => {
+    const response = await fetch(`${url}${path}`, {
+      method: 'PATCH',
+      headers: {
+        Authorization: ['Bearer', 'admin-token'].join(' '),
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
+    });
+
+    expect(response.status).toBe(400);
+    expect(await response.json()).toMatchObject({
+      error: expect.stringMatching(/^Invalid customer/),
+      issues: expect.any(Array),
+    });
+    expect(service.update).not.toHaveBeenCalled();
+  });
+});
+
 test.each(['GET', 'POST'])(
   '%s /customers forwards service failures to Express',
   async (method) => {

@@ -94,6 +94,18 @@ for (const section of ['customers']) {
       expect((await response.json()).error).toBeTruthy();
     });
   });
+
+  test(`DELETE /${section}/:id forwards unexpected failures`, async () => {
+    await withServer(async (url, service) => {
+      service.delete.mockRejectedValue(new Error('Database failure'));
+      const response = await fetch(`${url}/${section}/3`, {
+        method: 'DELETE',
+        headers: { Authorization: ['Bearer', 'admin-token'].join(' ') },
+      });
+      expect(response.status).toBe(500);
+      expect(await response.json()).toEqual({ error: 'Database failure' });
+    });
+  });
 }
 
 test('customer service delegates deletion to its repository', async () => {
