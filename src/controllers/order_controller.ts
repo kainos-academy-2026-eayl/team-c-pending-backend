@@ -13,8 +13,9 @@ const orderIDParamsSchema = z.object({
   orderID: z.coerce.number().int().positive().max(2147483647),
 });
 
-const customerIDParamsSchema = z.object({
-  customerID: z.coerce.number().int().positive().max(2147483647),
+const orderItemSchema = z.object({
+  productID: z.number().int().positive().max(2147483647),
+  quantity: z.number().int().positive().max(2147483647),
 });
 
 const createOrderSchema = z.object({
@@ -29,6 +30,8 @@ const updateOrderSchema = z
     type: z.string().trim().min(1).optional(),
   })
   .refine((data) => data.status !== undefined || data.type !== undefined);
+
+type CustomerResponse = Response<unknown, { customerID: number }>;
 
 function isRecordNotFound(error: unknown): boolean {
   return (
@@ -45,30 +48,6 @@ export class OrderController {
       .status(200)
       .json(
         await this.orderService.findOrdersByCustomerID(res.locals.customerID),
-      );
-  }
-
-  async getByCustomerID(req: Request, res: CustomerResponse): Promise<void> {
-    const result = customerIDParamsSchema.safeParse(req.params);
-    if (!result.success) {
-      res.status(400).json({
-        error: 'Invalid customer ID',
-        issues: result.error.issues,
-      });
-      return;
-    }
-
-    if (result.data.customerID !== res.locals.customerID) {
-      res
-        .status(403)
-        .json({ error: "Cannot access another customer's orders" });
-      return;
-    }
-
-    res
-      .status(200)
-      .json(
-        await this.orderService.findOrdersByCustomerID(result.data.customerID),
       );
   }
 
@@ -226,20 +205,19 @@ export function createOrderRouter(orderService: OrderService): Router {
       res.status(401).json({ error: 'A Bearer token is required' });
       return;
     }
-    const loginService = req.app.locals.loginService as LoginService;
+
+    const loginService: LoginService = req.app.locals.loginService;
     const customerID = await loginService.getCustomerIDFromToken(token);
     if (!customerID) {
       res.status(401).json({ error: 'Invalid or expired token' });
       return;
     }
+
     res.locals.customerID = customerID;
     next();
   });
 
   router.get('/', (_req, res: CustomerResponse) => controller.getAll(res));
-  router.get('/customer/:customerID', (req, res: CustomerResponse) =>
-    controller.getByCustomerID(req, res),
-  );
   router.get('/:orderID', (req, res: CustomerResponse) =>
     controller.getByID(req, res),
   );

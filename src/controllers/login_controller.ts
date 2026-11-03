@@ -1,6 +1,5 @@
 import { type Request, type Response, Router } from 'express';
 import { z } from 'zod';
-import type { LoginService } from '../services/login_service';
 
 const loginRouter = Router();
 
@@ -12,10 +11,11 @@ loginRouter.get('/me', async (req: Request, res: Response) => {
     return;
   }
 
-  const loginService = req.app.locals.loginService as LoginService;
+  const loginService = req.app.locals.loginService;
+  const basketService = req.app.locals.basketService;
   const customerName = await loginService.getCustomerDetailsFromToken(
     token,
-    req.app.locals.basketService,
+    basketService,
   );
   // no token or expired check
   if (!customerName) {
@@ -42,7 +42,7 @@ loginRouter.post('/login', async (req: Request, res: Response) => {
     return;
   }
 
-  const loginService = req.app.locals.loginService as LoginService;
+  const loginService = req.app.locals.loginService;
   const token = await loginService.login(
     result.data.email,
     result.data.password,

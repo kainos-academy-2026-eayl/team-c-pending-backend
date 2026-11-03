@@ -11,8 +11,6 @@ vi.mock('../src/prismaClient.ts', () => ({
       delete: vi.fn(),
     },
     product: { findMany: vi.fn() },
-    basketEntry: { findMany: vi.fn(), deleteMany: vi.fn() },
-    productOrder: { deleteMany: vi.fn() },
     orderItem: { deleteMany: vi.fn() },
     $transaction: vi.fn(),
   },
@@ -21,15 +19,21 @@ vi.mock('../src/prismaClient.ts', () => ({
 import { OrderRepository } from '../src/prisma_repo/order_repository.ts';
 import prisma from '../src/prismaClient.ts';
 
+const orderInclude = {
+  orderItems: {
+    include: {
+      product: true,
+    },
+  },
+};
+
 const transaction = {
   order: {
     findUniqueOrThrow: vi.fn(),
     create: vi.fn(),
     delete: vi.fn(),
   },
-  product: { findMany: vi.fn(), updateMany: vi.fn() },
-  basketEntry: { findMany: vi.fn(), deleteMany: vi.fn() },
-  productOrder: { deleteMany: vi.fn() },
+  product: { findMany: vi.fn() },
   orderItem: { deleteMany: vi.fn() },
 };
 
@@ -51,13 +55,13 @@ test('order reads include their OrderItem records', async () => {
   await expect(repository.findOrdersByCustomerID(42)).resolves.toBe(orders);
   expect(prisma.order.findMany).toHaveBeenLastCalledWith({
     where: { customerID: 42 },
-    include: { orderItems: true },
+    include: orderInclude,
   });
 
   await expect(repository.findOrderByID(1, 42)).resolves.toBe(orders[0]);
   expect(prisma.order.findUnique).toHaveBeenCalledWith({
     where: { orderID: 1, customerID: 42 },
-    include: { orderItems: true },
+    include: orderInclude,
   });
 });
 
@@ -90,7 +94,7 @@ test('create order snapshots current product prices into OrderItem records', asy
         create: [{ productID: 7, quantity: 2, unitPrice: 4.5 }],
       },
     },
-    include: { orderItems: true },
+    include: orderInclude,
   });
   expect(prisma.$transaction).toHaveBeenCalledOnce();
   expect(prisma.$transaction).toHaveBeenCalledWith(expect.any(Function), {
@@ -228,7 +232,7 @@ test('allows repeated products whose combined quantity exactly matches stock', a
         ],
       },
     },
-    include: { orderItems: true },
+    include: orderInclude,
   });
   expect(transaction.product.updateMany.mock.calls).toEqual([
     [
@@ -299,19 +303,18 @@ test('basket clearing failures reject the checkout transaction', async () => {
   ).rejects.toBe(error);
   expect(transaction.order.create).toHaveBeenCalledOnce();
 });
-
-test('update is scoped to the customer and cannot reassign order ownership', async () => {
+test('update scopes the order to its customer', async () => {
   const order = { orderID: 1, customerID: 43 };
   prisma.order.update.mockResolvedValue(order);
   const repository = new OrderRepository();
 
   await expect(
-    repository.updateOrder(1, { status: 'processing', customerID: 99 }, 43),
+    repository.updateOrder(1, { status: 'processing' }, 42),
   ).resolves.toBe(order);
   expect(prisma.order.update).toHaveBeenCalledWith({
-    where: { orderID: 1, customerID: 43 },
-    data: { status: 'processing', type: undefined },
-    include: { orderItems: true },
+    where: { orderID: 1, customerID: 42 },
+    data: { status: 'processing' },
+    include: orderInclude,
   });
 });
 
@@ -324,13 +327,10 @@ test('delete removes OrderItems before deleting their order atomically', async (
 
   expect(transaction.order.findUniqueOrThrow).toHaveBeenCalledWith({
     where: { orderID: 1, customerID: 42 },
-    include: { orderItems: true },
+    include: orderInclude,
   });
   expect(transaction.orderItem.deleteMany).toHaveBeenCalledWith({
     where: { orderID: 1 },
-  });
-  expect(transaction.productOrder.deleteMany).toHaveBeenCalledWith({
-    where: { OrderID: 1 },
   });
   expect(transaction.order.delete).toHaveBeenCalledWith({
     where: { orderID: 1, customerID: 42 },

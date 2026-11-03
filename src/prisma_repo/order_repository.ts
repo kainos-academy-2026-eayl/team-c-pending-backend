@@ -5,7 +5,13 @@ import {
 } from '../generated/prisma/client';
 import prisma from '../prismaClient';
 
-const orderInclude = { orderItems: true } satisfies Prisma.OrderInclude;
+const orderInclude = {
+  orderItems: {
+    include: {
+      product: true,
+    },
+  },
+} satisfies Prisma.OrderInclude;
 
 export type OrderWithItems = Prisma.OrderGetPayload<{
   include: typeof orderInclude;
@@ -25,23 +31,7 @@ export class OrderProductsNotFoundError extends Error {
   }
 }
 
-export class OrderInsufficientStockError extends Error {
-  constructor(readonly productIDs: number[]) {
-    super(`Insufficient stock for products: ${productIDs.join(', ')}`);
-    this.name = 'OrderInsufficientStockError';
-  }
-}
-
-export class OrderBasketEmptyError extends Error {
-  constructor() {
-    super('Basket is empty');
-    this.name = 'OrderBasketEmptyError';
-  }
-}
-
 export class OrderRepository {
-  constructor(private client: PrismaClient = prisma) {}
-
   findOrdersByCustomerID(customerID: number): Promise<OrderWithItems[]> {
     return this.client.order.findMany({
       where: { customerID },
@@ -53,7 +43,7 @@ export class OrderRepository {
     orderID: number,
     customerID: number,
   ): Promise<OrderWithItems | null> {
-    return this.client.order.findUnique({
+    return prisma.order.findUnique({
       where: { orderID, customerID },
       include: orderInclude,
     });

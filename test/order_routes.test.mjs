@@ -9,10 +9,14 @@ import {
   OrderProductsNotFoundError,
 } from '../src/services/order_service.ts';
 
-const authenticatedHeaders = {
-  'Content-Type': 'application/json',
-  Authorization: 'Bearer test-token',
-};
+const fetch = (url, options = {}) =>
+  globalThis.fetch(url, {
+    ...options,
+    headers: {
+      Authorization: 'Bearer test-token',
+      ...options.headers,
+    },
+  });
 
 async function withServer(
   orderService,
@@ -38,16 +42,53 @@ async function withServer(
   }
 }
 
+test('order routes reject missing and invalid bearer tokens', async () => {
+  const service = { findOrdersByCustomerID: vi.fn() };
+  const loginService = {
+    getCustomerIDFromToken: vi.fn().mockResolvedValue(null),
+  };
+
+  await withServer(
+    service,
+    async (url) => {
+      const missingResponse = await globalThis.fetch(`${url}/orders`);
+      expect(missingResponse.status).toBe(401);
+      expect(await missingResponse.json()).toEqual({
+        error: 'A Bearer token is required',
+      });
+
+      const invalidResponse = await globalThis.fetch(`${url}/orders`, {
+        headers: { Authorization: 'Bearer invalid-token' },
+      });
+      expect(invalidResponse.status).toBe(401);
+      expect(await invalidResponse.json()).toEqual({
+        error: 'Invalid or expired token',
+      });
+      expect(service.findOrdersByCustomerID).not.toHaveBeenCalled();
+    },
+    loginService,
+  );
+});
+
 test('order routes expose CRUD operations through the service', async () => {
   const order = {
     orderID: 1,
     customerID: 42,
     status: 'pending',
     type: 'delivery',
-    orderItems: [],
+    orderItems: [
+      {
+        orderItemID: 10,
+        orderID: 1,
+        productID: 7,
+        quantity: 2,
+        unitPrice: 4.5,
+        itemStatus: 'active',
+        product: { productID: 7, name: 'Apple', image: '/apple.png' },
+      },
+    ],
   };
   const orderService = {
-    findManyOrders: vi.fn().mockResolvedValue([order]),
     findOrdersByCustomerID: vi.fn().mockResolvedValue([order]),
     findOrderByID: vi.fn().mockResolvedValue(order),
     createOrder: vi.fn().mockResolvedValue(order),
@@ -62,20 +103,12 @@ test('order routes expose CRUD operations through the service', async () => {
     expect(allResponse.status).toBe(200);
     expect(await allResponse.json()).toEqual([order]);
 
-    const customerResponse = await fetch(`${url}/orders/customer/42`, {
-      headers: authenticatedHeaders,
-    });
-    expect(customerResponse.status).toBe(200);
-    expect(await customerResponse.json()).toEqual([order]);
-
-    const byIDResponse = await fetch(`${url}/orders/1`, {
-      headers: authenticatedHeaders,
-    });
+    const byIDResponse = await fetch(`${url}/orders/1`);
     expect(byIDResponse.status).toBe(200);
     expect(await byIDResponse.json()).toEqual(order);
 
     const createData = {
-      customerID: 42,
+      customerID: 99,
       status: 'pending',
       type: 'delivery',
       orderItems: [{ productID: 7, quantity: 2 }],
@@ -88,8 +121,8 @@ test('order routes expose CRUD operations through the service', async () => {
     expect(createResponse.status).toBe(201);
     expect(await createResponse.json()).toEqual(order);
     expect(orderService.createOrder).toHaveBeenCalledExactlyOnceWith({
+      ...createData,
       customerID: 42,
-      type: 'delivery',
     });
 
     const updateData = { status: 'processing' };
@@ -117,15 +150,12 @@ test('order routes expose CRUD operations through the service', async () => {
     expect(await deleteResponse.json()).toEqual(order);
     expect(orderService.delete).toHaveBeenCalledExactlyOnceWith(1, 42);
     expect(orderService.findOrderByID).toHaveBeenCalledExactlyOnceWith(1, 42);
-    expect(orderService.findOrdersByCustomerID).toHaveBeenCalledTimes(2);
-    expect(orderService.findOrdersByCustomerID).toHaveBeenCalledWith(42);
-    expect(orderService.findManyOrders).not.toHaveBeenCalled();
+    expect(orderService.findOrdersByCustomerID).toHaveBeenNthCalledWith(1, 42);
   });
 });
 
 test('order routes validate input and return 404 for missing orders', async () => {
   const orderService = {
-    findManyOrders: vi.fn(),
     findOrdersByCustomerID: vi.fn(),
     findOrderByID: vi.fn().mockResolvedValue(null),
     createOrder: vi.fn(),
@@ -291,12 +321,6 @@ test('order route rejects items referring to unknown products', async () => {
 });
 
 test.each([
-  [
-    'GET',
-    '/orders/customer/0',
-    'findOrdersByCustomerID',
-    'Invalid customer ID',
-  ],
   ['GET', '/orders/invalid', 'findOrderByID', 'Invalid order ID'],
   ['PATCH', '/orders/2147483648', 'updateOrder', 'Invalid order ID'],
   ['DELETE', '/orders/-1', 'delete', 'Invalid order ID'],

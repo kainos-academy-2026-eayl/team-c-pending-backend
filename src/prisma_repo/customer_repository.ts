@@ -16,12 +16,30 @@ export class CustomerRepository {
     return prisma.customer.findUnique({ where: { customerID } });
   }
 
+  //finds specific customers with IDs;
+  async CheckRole(customerID: number): Promise<Customer> {
+    const customer = await prisma.customer.findUnique({
+      where: { customerID },
+    });
+
+    if (!customer) {
+      throw new Error('Customer not found');
+    }
+
+    if (customer.role === 'customer') {
+      throw new Error('Customers cannot perform this action');
+    }
+
+    return customer;
+  }
+
   // creates new customer in database
   create(data: {
     firstName: string;
     lastName: string;
     email: string;
     password: string;
+    role: string;
   }): Promise<Customer> {
     return prisma.customer.create({ data });
   }
@@ -33,6 +51,7 @@ export class CustomerRepository {
       lastName: string;
       email: string;
       password: string;
+      role: string;
     }>,
     // hashes passsword being updated
   ): Promise<Customer> {

@@ -91,12 +91,45 @@ test('customer service delegates its operations to the repository', async () => 
   );
   expect(repository.create).toHaveBeenCalledExactlyOnceWith({
     ...data,
+    role: 'customer',
     password: expect.any(String),
   });
   const storedPassword = repository.create.mock.calls[0][0].password;
   expect(storedPassword).not.toBe(data.password);
   await expect(compare(data.password, storedPassword)).resolves.toBe(true);
   expect(getRounds(storedPassword)).toBe(12);
+});
+
+test('customer service CheckRole returns the customer allowed by the repository', async () => {
+  const customer = {
+    customerID: 1,
+    email: 'admin@example.com',
+    role: 'admin',
+  };
+  const repository = {
+    CheckRole: vi.fn().mockResolvedValue(customer),
+  };
+  const service = new CustomerService(repository);
+
+  await expect(service.CheckRole(customer.customerID)).resolves.toBe(customer);
+  expect(repository.CheckRole).toHaveBeenCalledExactlyOnceWith(
+    customer.customerID,
+  );
+});
+
+test.each([
+  'Customer not found',
+  'Customers cannot perform this action',
+  'Database unavailable',
+])('customer service CheckRole propagates "%s"', async (message) => {
+  const error = new Error(message);
+  const repository = {
+    CheckRole: vi.fn().mockRejectedValue(error),
+  };
+  const service = new CustomerService(repository);
+
+  await expect(service.CheckRole(1)).rejects.toBe(error);
+  expect(repository.CheckRole).toHaveBeenCalledExactlyOnceWith(1);
 });
 
 test('customer controller looks up a customer by email', async () => {

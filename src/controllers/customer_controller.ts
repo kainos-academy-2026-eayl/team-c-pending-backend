@@ -10,11 +10,12 @@ export class CustomerController {
   async getAll(res: Response): Promise<void> {
     const customers = await this.customerService.findAll();
     res.json(
-      customers.map(({ customerID, firstName, lastName, email }) => ({
+      customers.map(({ customerID, firstName, lastName, email, role }) => ({
         customerID,
         firstName,
         lastName,
         email,
+        role,
       })),
     );
   }

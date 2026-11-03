@@ -12,6 +12,9 @@ export class CustomerService {
   async findByID(customerID: number): Promise<Customer | null> {
     return this.CustomerRepository.findByID(customerID);
   }
+  async CheckRole(customerID: number): Promise<Customer> {
+    return this.CustomerRepository.CheckRole(customerID);
+  }
 
   async create(data: {
     firstName: string;
@@ -23,6 +26,7 @@ export class CustomerService {
 
     return this.CustomerRepository.create({
       ...data,
+      role: 'customer',
       password: hashedPassword,
     });
   }
