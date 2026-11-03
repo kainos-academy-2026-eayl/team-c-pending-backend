@@ -12,8 +12,13 @@ export default class ReviewRepository {
   }
 
   create(review: Review) {
-    return prisma.review.create({
-      data: review,
+    const { customerID, productID, rating, comment } = review;
+    return prisma.review.upsert({
+      where: {
+        customerID_productID: { customerID, productID },
+      },
+      create: review,
+      update: { rating, comment },
     });
   }
 }

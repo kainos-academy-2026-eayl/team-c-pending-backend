@@ -55,7 +55,7 @@ test('product repository delegates all operations to Prisma', async () => {
       reviews: {
         include: {
           customer: {
-            select: { customerID: true, name: true },
+            select: { customerID: true, firstName: true, lastName: true },
           },
         },
       },

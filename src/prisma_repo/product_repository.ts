@@ -18,7 +18,7 @@ export class ProductRepository {
         reviews: {
           include: {
             customer: {
-              select: { customerID: true, name: true },
+              select: { customerID: true, firstName: true, lastName: true },
             },
           },
         },

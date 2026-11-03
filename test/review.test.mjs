@@ -3,7 +3,7 @@ import { expect, test, vi } from 'vitest';
 const prismaMock = vi.hoisted(() => ({
   review: {
     findMany: vi.fn(),
-    create: vi.fn(),
+    upsert: vi.fn(),
   },
 }));
 
@@ -24,19 +24,23 @@ test('review repository fetches product reviews with their customers', async () 
   });
 });
 
-test('review repository creates a review', async () => {
+test('review repository upserts a review by customer and product', async () => {
   const review = {
     productID: 7,
     customerID: 12,
     rating: 5,
     comment: 'Great lamp',
   };
-  prismaMock.review.create.mockResolvedValue(review);
+  prismaMock.review.upsert.mockResolvedValue(review);
   const repository = new ReviewRepository();
 
   await expect(repository.create(review)).resolves.toBe(review);
-  expect(prismaMock.review.create).toHaveBeenCalledExactlyOnceWith({
-    data: review,
+  expect(prismaMock.review.upsert).toHaveBeenCalledExactlyOnceWith({
+    where: {
+      customerID_productID: { customerID: 12, productID: 7 },
+    },
+    create: review,
+    update: { rating: 5, comment: 'Great lamp' },
   });
 });
 
