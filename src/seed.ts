@@ -9,7 +9,7 @@ try {
   const products = await prisma.product.findMany({
     orderBy: { productID: 'asc' },
     take: 2,
-    select: { productID: true },
+    select: { productID: true, price: true },
   });
   const [firstProduct, secondProduct] = products;
 
@@ -26,10 +26,18 @@ try {
         status: 'pending',
         date: new Date('2026-10-27T10:00:00Z'),
         type: 'delivery',
-        productOrders: {
+        orderItems: {
           create: [
-            { ProductID: firstProduct.productID, Quantity: 2 },
-            { ProductID: secondProduct.productID, Quantity: 1 },
+            {
+              productID: firstProduct.productID,
+              quantity: 2,
+              unitPrice: firstProduct.price,
+            },
+            {
+              productID: secondProduct.productID,
+              quantity: 1,
+              unitPrice: secondProduct.price,
+            },
           ],
         },
       },
@@ -40,8 +48,14 @@ try {
         status: 'processing',
         date: new Date('2026-10-26T14:30:00Z'),
         type: 'collection',
-        productOrders: {
-          create: [{ ProductID: secondProduct.productID, Quantity: 3 }],
+        orderItems: {
+          create: [
+            {
+              productID: secondProduct.productID,
+              quantity: 3,
+              unitPrice: secondProduct.price,
+            },
+          ],
         },
       },
     }),
@@ -51,15 +65,21 @@ try {
         status: 'completed',
         date: new Date('2026-10-24T09:15:00Z'),
         type: 'delivery',
-        productOrders: {
-          create: [{ ProductID: firstProduct.productID, Quantity: 1 }],
+        orderItems: {
+          create: [
+            {
+              productID: firstProduct.productID,
+              quantity: 1,
+              unitPrice: firstProduct.price,
+            },
+          ],
         },
       },
     }),
   ]);
 
   console.log(
-    'Created 3 sample orders and 4 product-order entries. Order IDs:',
+    'Created 3 sample orders and 4 order items. Order IDs:',
     orders.map((order) => order.orderID),
   );
 } catch (error) {
