@@ -24,6 +24,20 @@ export type CreateOrderData = {
 
 export type UpdateOrderData = Partial<Pick<Order, 'status' | 'type'>>;
 
+export class OrderBasketEmptyError extends Error {
+  constructor() {
+    super('Basket is empty');
+    this.name = 'OrderBasketEmptyError';
+  }
+}
+
+export class OrderInsufficientStockError extends Error {
+  constructor(readonly productIDs: number[]) {
+    super(`Insufficient stock for products: ${productIDs.join(', ')}`);
+    this.name = 'OrderInsufficientStockError';
+  }
+}
+
 export class OrderProductsNotFoundError extends Error {
   constructor(readonly productIDs: number[]) {
     super(`Products not found: ${productIDs.join(', ')}`);
@@ -32,6 +46,8 @@ export class OrderProductsNotFoundError extends Error {
 }
 
 export class OrderRepository {
+  constructor(private client: PrismaClient = prisma) {}
+
   findOrdersByCustomerID(customerID: number): Promise<OrderWithItems[]> {
     return this.client.order.findMany({
       where: { customerID },
@@ -43,7 +59,7 @@ export class OrderRepository {
     orderID: number,
     customerID: number,
   ): Promise<OrderWithItems | null> {
-    return prisma.order.findUnique({
+    return this.client.order.findUnique({
       where: { orderID, customerID },
       include: orderInclude,
     });
@@ -147,9 +163,6 @@ export class OrderRepository {
       });
 
       await transaction.orderItem.deleteMany({ where: { orderID } });
-      await transaction.productOrder.deleteMany({
-        where: { OrderID: orderID },
-      });
       await transaction.order.delete({ where: { orderID, customerID } });
 
       return order;

@@ -31,8 +31,6 @@ const updateOrderSchema = z
   })
   .refine((data) => data.status !== undefined || data.type !== undefined);
 
-type CustomerResponse = Response<unknown, { customerID: number }>;
-
 function isRecordNotFound(error: unknown): boolean {
   return (
     error instanceof Prisma.PrismaClientKnownRequestError &&
