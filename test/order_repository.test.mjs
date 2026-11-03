@@ -33,8 +33,9 @@ const transaction = {
     create: vi.fn(),
     delete: vi.fn(),
   },
-  product: { findMany: vi.fn() },
+  product: { findMany: vi.fn(), updateMany: vi.fn() },
   orderItem: { deleteMany: vi.fn() },
+  basketEntry: { findMany: vi.fn(), deleteMany: vi.fn() },
 };
 
 beforeEach(() => {
