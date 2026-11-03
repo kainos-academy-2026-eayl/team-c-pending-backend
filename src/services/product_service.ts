@@ -8,7 +8,7 @@ export class ProductService {
     return this.productRepository.findMany();
   }
 
-  async findByID(productID: number): Promise<Product | null> {
+  async findByID(productID: number) {
     return this.productRepository.findByID(productID);
   }
 
@@ -25,5 +25,9 @@ export class ProductService {
     return this.productRepository.create({
       ...data,
     });
+  }
+
+  async getProductCategories(): Promise<string[]> {
+    return this.productRepository.getProductCategories();
   }
 }

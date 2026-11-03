@@ -18,6 +18,8 @@ import { CustomerService } from './services/customer_service';
 import { LoginService } from './services/login_service';
 import OrderService from './services/order_service';
 import { ProductService } from './services/product_service';
+import ReviewService from './services/review_service';
+import ReviewRepository from './prisma_repo/review_repository';
 
 export function createApp(): Express {
   const app = express();
@@ -36,7 +38,7 @@ export function createApp(): Express {
   const orderService = new OrderService(orderRepository);
 
   app.locals.basketService = new BasketService(new BasketRepository(prisma));
-
+  app.locals.reviewService = new ReviewService(new ReviewRepository()); 
   app.locals.customerService = customerService;
   app.locals.loginService = loginService;
 

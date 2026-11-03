@@ -4,17 +4,6 @@ import express from 'express';
 import { expect, test, vi } from 'vitest';
 import { createProductRouter } from '../src/controllers/product_controller.ts';
 
-const prismaMock = vi.hoisted(() => ({
-  product: {
-    findMany: vi.fn(),
-    findUnique: vi.fn(),
-  },
-}));
-
-vi.mock('../src/prismaClient.ts', () => ({ default: prismaMock }));
-
-import prisma from '../src/prismaClient.ts';
-
 function validProductData() {
   return {
     name: 'Desk lamp',
@@ -26,9 +15,10 @@ function validProductData() {
   };
 }
 
-async function withServer(productService, run) {
+async function withServer(productService, run, locals = {}) {
   const app = express();
   app.use(express.json());
+  Object.assign(app.locals, locals);
   app.use('/products', createProductRouter(productService));
   app.use((error, _req, res, _next) => {
     res.status(500).json({ error: error.message });
@@ -129,20 +119,16 @@ test.each(['/products/category', '/products/category?category='])(
 );
 
 test('GET /products/categories returns distinct categories', async () => {
-  prisma.product.findMany.mockResolvedValue([
-    { category: 'lighting' },
-    { category: 'kitchen' },
-  ]);
+  const service = {
+    getProductCategories: vi.fn().mockResolvedValue(['lighting', 'kitchen']),
+  };
 
-  await withServer({}, async (url) => {
+  await withServer(service, async (url) => {
     const response = await fetch(`${url}/products/categories`);
 
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual(['lighting', 'kitchen']);
-    expect(prisma.product.findMany).toHaveBeenCalledExactlyOnceWith({
-      distinct: ['category'],
-      select: { category: true },
-    });
+    expect(service.getProductCategories).toHaveBeenCalledOnce();
   });
 });
 
@@ -153,16 +139,14 @@ test.each([
 ])(
   'GET /products/7/in-stock returns %s for the product lookup',
   async (product, inStock) => {
-    prisma.product.findUnique.mockResolvedValue(product);
+    const service = { findByID: vi.fn().mockResolvedValue(product) };
 
-    await withServer({}, async (url) => {
+    await withServer(service, async (url) => {
       const response = await fetch(`${url}/products/7/in-stock`);
 
       expect(response.status).toBe(200);
       expect(await response.json()).toEqual({ inStock });
-      expect(prisma.product.findUnique).toHaveBeenCalledWith({
-        where: { productID: 7 },
-      });
+      expect(service.findByID).toHaveBeenCalledExactlyOnceWith(7);
     });
   },
 );
@@ -170,9 +154,9 @@ test.each([
 test.each(['/products/not-a-number/in-stock', '/products/0/in-stock'])(
   'GET %s rejects an invalid product ID',
   async (path) => {
-    prisma.product.findUnique.mockClear();
+    const service = { findByID: vi.fn() };
 
-    await withServer({}, async (url) => {
+    await withServer(service, async (url) => {
       const response = await fetch(`${url}${path}`);
 
       expect(response.status).toBe(400);
@@ -180,10 +164,195 @@ test.each(['/products/not-a-number/in-stock', '/products/0/in-stock'])(
         error: 'Invalid product id',
         issues: expect.any(Array),
       });
-      expect(prisma.product.findUnique).not.toHaveBeenCalled();
+      expect(service.findByID).not.toHaveBeenCalled();
     });
   },
 );
+
+test('GET /products/:productID returns the matching product', async () => {
+  const product = { productID: 7, name: 'Desk lamp' };
+  const service = { findByID: vi.fn().mockResolvedValue(product) };
+
+  await withServer(service, async (url) => {
+    const response = await fetch(`${url}/products/7`);
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual(product);
+    expect(service.findByID).toHaveBeenCalledExactlyOnceWith(7);
+  });
+});
+
+test('GET /products/:productID returns 404 when the product does not exist', async () => {
+  const service = { findByID: vi.fn().mockResolvedValue(null) };
+
+  await withServer(service, async (url) => {
+    const response = await fetch(`${url}/products/7`);
+
+    expect(response.status).toBe(404);
+    expect(await response.json()).toEqual({ error: 'Product not found' });
+  });
+});
+
+test.each(['/products/not-a-number', '/products/0', '/products/1.5'])(
+  'GET %s rejects an invalid product ID',
+  async (path) => {
+    const service = { findByID: vi.fn() };
+
+    await withServer(service, async (url) => {
+      const response = await fetch(`${url}${path}`);
+
+      expect(response.status).toBe(400);
+      expect(await response.json()).toMatchObject({
+        error: 'Invalid product id',
+        issues: expect.any(Array),
+      });
+      expect(service.findByID).not.toHaveBeenCalled();
+    });
+  },
+);
+
+test.each([undefined, 'Basic token'])(
+  'POST /products/7/reviews rejects Authorization %s',
+  async (authorization) => {
+    const getCustomerIDFromToken = vi.fn();
+
+    await withServer(
+      {},
+      async (url) => {
+        const response = await fetch(`${url}/products/7/reviews`, {
+          method: 'POST',
+          ...(authorization
+            ? { headers: { Authorization: authorization } }
+            : {}),
+        });
+
+        expect(response.status).toBe(401);
+        expect(await response.json()).toMatchObject({
+          error: expect.any(String),
+        });
+        expect(getCustomerIDFromToken).not.toHaveBeenCalled();
+      },
+      { loginService: { getCustomerIDFromToken } },
+    );
+  },
+);
+
+test('POST /products/7/reviews rejects an invalid or expired token', async () => {
+  const getCustomerIDFromToken = vi.fn().mockResolvedValue(null);
+
+  await withServer(
+    {},
+    async (url) => {
+      const response = await fetch(`${url}/products/7/reviews`, {
+        method: 'POST',
+        headers: { Authorization: 'Bearer expired' },
+      });
+
+      expect(response.status).toBe(401);
+      expect(await response.json()).toEqual({
+        error: 'Invalid or expired token',
+      });
+      expect(getCustomerIDFromToken).toHaveBeenCalledExactlyOnceWith('expired');
+    },
+    { loginService: { getCustomerIDFromToken } },
+  );
+});
+
+test.each([[{ rating: 0 }], [{ rating: 6 }], [{ rating: 5, message: 123 }]])(
+  'POST /products/7/reviews rejects invalid review data %j',
+  async (body) => {
+    const getCustomerIDFromToken = vi.fn().mockResolvedValue(12);
+    const create = vi.fn();
+
+    await withServer(
+      {},
+      async (url) => {
+        const response = await fetch(`${url}/products/7/reviews`, {
+          method: 'POST',
+          headers: {
+            Authorization: 'Bearer valid',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(body),
+        });
+
+        expect(response.status).toBe(400);
+        expect(await response.json()).toMatchObject({
+          error: 'Invalid review request',
+          issues: expect.any(Array),
+        });
+        expect(create).not.toHaveBeenCalled();
+      },
+      {
+        loginService: { getCustomerIDFromToken },
+        reviewService: { create },
+      },
+    );
+  },
+);
+
+test('POST /products/7/reviews creates a review with its message', async () => {
+  const getCustomerIDFromToken = vi.fn().mockResolvedValue(12);
+  const create = vi.fn().mockResolvedValue({});
+
+  await withServer(
+    {},
+    async (url) => {
+      const response = await fetch(`${url}/products/7/reviews`, {
+        method: 'POST',
+        headers: {
+          Authorization: 'bEaReR valid',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ rating: 4, message: 'Great lamp' }),
+      });
+
+      expect(response.status).toBe(200);
+      expect(await response.text()).toBe('');
+      expect(getCustomerIDFromToken).toHaveBeenCalledExactlyOnceWith('valid');
+      expect(create).toHaveBeenCalledExactlyOnceWith({
+        productID: 7,
+        customerID: 12,
+        rating: 4,
+        comment: 'Great lamp',
+      });
+    },
+    {
+      loginService: { getCustomerIDFromToken },
+      reviewService: { create },
+    },
+  );
+});
+
+test('POST /products/7/reviews defaults an omitted message to null', async () => {
+  const create = vi.fn().mockResolvedValue({});
+
+  await withServer(
+    {},
+    async (url) => {
+      const response = await fetch(`${url}/products/7/reviews`, {
+        method: 'POST',
+        headers: {
+          Authorization: 'Bearer valid',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ rating: 5 }),
+      });
+
+      expect(response.status).toBe(200);
+      expect(create).toHaveBeenCalledExactlyOnceWith({
+        productID: 7,
+        customerID: 12,
+        rating: 5,
+        comment: null,
+      });
+    },
+    {
+      loginService: { getCustomerIDFromToken: vi.fn().mockResolvedValue(12) },
+      reviewService: { create },
+    },
+  );
+});
 
 test('POST /products forwards product data to the service', async () => {
   const data = {
