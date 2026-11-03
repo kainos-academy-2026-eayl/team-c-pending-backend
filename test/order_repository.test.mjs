@@ -47,7 +47,7 @@ beforeEach(() => {
   transaction.product.updateMany.mockResolvedValue({ count: 1 });
 });
 
-test('order reads retain their OrderItem records and hidden products', async () => {
+test('order reads include their OrderItem records, including hidden products', async () => {
   const orders = [
     {
       orderID: 1,
@@ -77,7 +77,7 @@ test('order reads retain their OrderItem records and hidden products', async () 
 });
 
 test.each([true, false])(
-  'checkout preserves basket products with hide=%s and snapshots their prices',
+  'checkout preserves products with hide=%s and snapshots current prices in OrderItems',
   async (hide) => {
     const order = { orderID: 1, customerID: 42, orderItems: [] };
     transaction.product.findMany.mockResolvedValue([
