@@ -5,7 +5,11 @@ import type {
   UpdateOrderData,
 } from '../prisma_repo/order_repository.ts';
 
-export { OrderProductsNotFoundError } from '../prisma_repo/order_repository';
+export {
+  OrderBasketEmptyError,
+  OrderInsufficientStockError,
+  OrderProductsNotFoundError,
+} from '../prisma_repo/order_repository';
 
 export default class OrderService {
   constructor(private orderRepository: OrderRepository) {}

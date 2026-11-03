@@ -3,7 +3,16 @@ import express from 'express';
 import { expect, test, vi } from 'vitest';
 import { createOrderRouter } from '../src/controllers/order_controller.ts';
 import { Prisma } from '../src/generated/prisma/client.ts';
-import { OrderProductsNotFoundError } from '../src/services/order_service.ts';
+import {
+  OrderBasketEmptyError,
+  OrderInsufficientStockError,
+  OrderProductsNotFoundError,
+} from '../src/services/order_service.ts';
+
+const authenticatedHeaders = {
+  Authorization: ['Bearer', 'test-token'].join(' '),
+  'Content-Type': 'application/json',
+};
 
 const fetch = (url, options = {}) =>
   globalThis.fetch(url, {
@@ -93,7 +102,9 @@ test('order routes expose CRUD operations through the service', async () => {
   };
 
   await withServer(orderService, async (url) => {
-    const allResponse = await fetch(`${url}/orders`);
+    const allResponse = await fetch(`${url}/orders`, {
+      headers: authenticatedHeaders,
+    });
     expect(allResponse.status).toBe(200);
     expect(await allResponse.json()).toEqual([order]);
 
@@ -109,20 +120,20 @@ test('order routes expose CRUD operations through the service', async () => {
     };
     const createResponse = await fetch(`${url}/orders`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: authenticatedHeaders,
       body: JSON.stringify(createData),
     });
     expect(createResponse.status).toBe(201);
     expect(await createResponse.json()).toEqual(order);
     expect(orderService.createOrder).toHaveBeenCalledExactlyOnceWith({
-      ...createData,
+      type: 'delivery',
       customerID: 42,
     });
 
     const updateData = { status: 'processing' };
     const updateResponse = await fetch(`${url}/orders/1`, {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
+      headers: authenticatedHeaders,
       body: JSON.stringify(updateData),
     });
     expect(updateResponse.status).toBe(200);
@@ -136,7 +147,10 @@ test('order routes expose CRUD operations through the service', async () => {
       42,
     );
 
-    const deleteResponse = await fetch(`${url}/orders/1`, { method: 'DELETE' });
+    const deleteResponse = await fetch(`${url}/orders/1`, {
+      method: 'DELETE',
+      headers: authenticatedHeaders,
+    });
     expect(deleteResponse.status).toBe(200);
     expect(await deleteResponse.json()).toEqual(order);
     expect(orderService.delete).toHaveBeenCalledExactlyOnceWith(1, 42);
@@ -155,17 +169,19 @@ test('order routes validate input and return 404 for missing orders', async () =
   };
 
   await withServer(orderService, async (url) => {
-    const missingResponse = await fetch(`${url}/orders/1`);
+    const missingResponse = await fetch(`${url}/orders/1`, {
+      headers: authenticatedHeaders,
+    });
     expect(missingResponse.status).toBe(404);
     expect(await missingResponse.json()).toEqual({ error: 'Order not found' });
 
     const invalidResponse = await fetch(`${url}/orders`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: authenticatedHeaders,
       body: JSON.stringify({
         customerID: 0,
         status: '',
-        type: 'delivery',
+        type: '',
         orderItems: [{ productID: 0, quantity: -2 }],
       }),
     });
@@ -174,6 +190,106 @@ test('order routes validate input and return 404 for missing orders', async () =
       error: 'Invalid order request',
     });
     expect(orderService.createOrder).not.toHaveBeenCalled();
+  });
+});
+
+test.each(
+  ['GET', 'POST', 'PATCH', 'DELETE'].flatMap((method) =>
+    [undefined, 'Basic credentials', 'Bearer', 'Bearer one two'].map(
+      (authorization) => [method, authorization],
+    ),
+  ),
+)(
+  '%s rejects missing or malformed authorization %s',
+  async (method, authorization) => {
+    const service = { createOrder: vi.fn() };
+    const loginService = { getCustomerIDFromToken: vi.fn() };
+    await withServer(
+      service,
+      async (url) => {
+        const response = await globalThis.fetch(`${url}/orders`, {
+          method,
+          headers: authorization ? { Authorization: authorization } : {},
+        });
+        expect(response.status).toBe(401);
+        expect(await response.json()).toEqual({
+          error: 'A Bearer token is required',
+        });
+        expect(loginService.getCustomerIDFromToken).not.toHaveBeenCalled();
+        expect(service.createOrder).not.toHaveBeenCalled();
+      },
+      loginService,
+    );
+  },
+);
+
+test('POST rejects invalid or expired tokens before creating an order', async () => {
+  const service = { createOrder: vi.fn() };
+  const loginService = {
+    getCustomerIDFromToken: vi.fn().mockResolvedValue(null),
+  };
+  await withServer(
+    service,
+    async (url) => {
+      const response = await fetch(`${url}/orders`, {
+        method: 'POST',
+        headers: authenticatedHeaders,
+      });
+      expect(response.status).toBe(401);
+      expect(await response.json()).toEqual({
+        error: 'Invalid or expired token',
+      });
+      expect(
+        loginService.getCustomerIDFromToken,
+      ).toHaveBeenCalledExactlyOnceWith('test-token');
+      expect(service.createOrder).not.toHaveBeenCalled();
+    },
+    loginService,
+  );
+});
+
+test('POST rejects an empty basket', async () => {
+  const service = {
+    createOrder: vi.fn().mockRejectedValue(new OrderBasketEmptyError()),
+  };
+  await withServer(service, async (url) => {
+    const response = await fetch(`${url}/orders`, {
+      method: 'POST',
+      headers: authenticatedHeaders,
+      body: JSON.stringify({ status: 'pending', type: 'delivery' }),
+    });
+    expect(response.status).toBe(400);
+    expect(await response.json()).toEqual({ error: 'Basket is empty' });
+  });
+});
+
+test('order route returns a conflict for insufficient stock', async () => {
+  const service = {
+    createOrder: vi
+      .fn()
+      .mockRejectedValue(new OrderInsufficientStockError([7])),
+  };
+  const data = {
+    customerID: 42,
+    status: 'pending',
+    type: 'delivery',
+    orderItems: [{ productID: 7, quantity: 3 }],
+  };
+  await withServer(service, async (url) => {
+    const response = await fetch(`${url}/orders`, {
+      method: 'POST',
+      headers: authenticatedHeaders,
+      body: JSON.stringify(data),
+    });
+    expect(response.status).toBe(409);
+    expect(await response.json()).toEqual({
+      error: 'Insufficient stock',
+      productIDs: [7],
+    });
+    expect(service.createOrder).toHaveBeenCalledExactlyOnceWith({
+      customerID: 42,
+      type: 'delivery',
+    });
   });
 });
 
@@ -192,7 +308,7 @@ test('order route rejects items referring to unknown products', async () => {
   await withServer(orderService, async (url) => {
     const response = await fetch(`${url}/orders`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: authenticatedHeaders,
       body: JSON.stringify({
         customerID: 42,
         status: 'pending',
@@ -218,7 +334,10 @@ test.each([
   async (method, path, operation, error) => {
     const service = { [operation]: vi.fn() };
     await withServer(service, async (url) => {
-      const response = await fetch(`${url}${path}`, { method });
+      const response = await fetch(`${url}${path}`, {
+        method,
+        headers: authenticatedHeaders,
+      });
       expect(response.status).toBe(400);
       expect(await response.json()).toMatchObject({
         error,
@@ -236,7 +355,7 @@ test.each([{}, { status: '' }, { type: ' ' }, { status: 1 }])(
     await withServer(service, async (url) => {
       const response = await fetch(`${url}/orders/1`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: authenticatedHeaders,
         body: JSON.stringify(body),
       });
       expect(response.status).toBe(400);
@@ -255,7 +374,7 @@ test('PATCH supports updating only the order type', async () => {
   await withServer(service, async (url) => {
     const response = await fetch(`${url}/orders/1`, {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
+      headers: authenticatedHeaders,
       body: JSON.stringify({ type: 'collection' }),
     });
     expect(response.status).toBe(200);
@@ -270,16 +389,17 @@ test('PATCH supports updating only the order type', async () => {
   });
 });
 
-test('POST preserves orders without items and defaults to an empty item list', async () => {
+test('POST uses token identity and ignores client-supplied items and customerID', async () => {
   const order = { orderID: 1, orderItems: [] };
   const service = { createOrder: vi.fn().mockResolvedValue(order) };
   await withServer(service, async (url) => {
     const response = await fetch(`${url}/orders`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: authenticatedHeaders,
       body: JSON.stringify({
-        customerID: 42,
-        status: 'pending',
+        customerID: 99,
+        orderItems: [{ productID: 999, quantity: 100 }],
+        status: 'completed',
         type: 'delivery',
       }),
     });
@@ -287,9 +407,7 @@ test('POST preserves orders without items and defaults to an empty item list', a
     expect(await response.json()).toEqual(order);
     expect(service.createOrder).toHaveBeenCalledExactlyOnceWith({
       customerID: 42,
-      status: 'pending',
       type: 'delivery',
-      orderItems: [],
     });
   });
 });
@@ -308,7 +426,7 @@ test.each([
     await withServer(service, async (url) => {
       const response = await fetch(`${url}/orders/1`, {
         method,
-        headers: { 'Content-Type': 'application/json' },
+        headers: authenticatedHeaders,
         body: JSON.stringify({ status: 'processing' }),
       });
       expect(response.status).toBe(404);
@@ -330,7 +448,7 @@ test.each([
     await withServer(service, async (url) => {
       const response = await fetch(`${url}${path}`, {
         method,
-        headers: { 'Content-Type': 'application/json' },
+        headers: authenticatedHeaders,
         body: JSON.stringify({
           customerID: 42,
           status: 'pending',
@@ -354,10 +472,89 @@ test('PATCH does not treat other Prisma errors as missing orders', async () => {
   await withServer(service, async (url) => {
     const response = await fetch(`${url}/orders/1`, {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
+      headers: authenticatedHeaders,
       body: JSON.stringify({ status: 'processing' }),
     });
     expect(response.status).toBe(500);
     expect(await response.json()).toEqual({ error: 'Constraint failed' });
+  });
+});
+
+test('customers cannot list another customer orders', async () => {
+  const service = { findOrdersByCustomerID: vi.fn() };
+  await withServer(service, async (url) => {
+    const response = await fetch(`${url}/orders/customer/99`, {
+      headers: authenticatedHeaders,
+    });
+    expect(response.status).toBe(404);
+    expect(service.findOrdersByCustomerID).not.toHaveBeenCalled();
+  });
+});
+
+test.each([
+  ['GET', 'findOrderByID', null],
+  [
+    'PATCH',
+    'updateOrder',
+    new Prisma.PrismaClientKnownRequestError('Not found', {
+      code: 'P2025',
+      clientVersion: '7.10.1',
+    }),
+  ],
+  [
+    'DELETE',
+    'delete',
+    new Prisma.PrismaClientKnownRequestError('Not found', {
+      code: 'P2025',
+      clientVersion: '7.10.1',
+    }),
+  ],
+])(
+  '%s scopes order access to the token customer ID',
+  async (method, operation, result) => {
+    const service = { [operation]: vi.fn() };
+    if (result === null) {
+      service[operation].mockResolvedValue(null);
+    } else {
+      service[operation].mockRejectedValue(result);
+    }
+    await withServer(service, async (url) => {
+      const response = await fetch(`${url}/orders/9`, {
+        method,
+        headers: authenticatedHeaders,
+        ...(method === 'PATCH'
+          ? { body: JSON.stringify({ type: 'collection', customerID: 99 }) }
+          : {}),
+      });
+      expect(response.status).toBe(404);
+      if (method === 'PATCH') {
+        expect(service[operation]).toHaveBeenCalledExactlyOnceWith(
+          9,
+          { type: 'collection' },
+          42,
+        );
+      } else {
+        expect(service[operation]).toHaveBeenCalledExactlyOnceWith(9, 42);
+      }
+    });
+  },
+);
+
+test('POST returns a retryable conflict for serialization failures', async () => {
+  const error = new Prisma.PrismaClientKnownRequestError('Write conflict', {
+    code: 'P2034',
+    clientVersion: '7.10.1',
+  });
+  const service = { createOrder: vi.fn().mockRejectedValue(error) };
+  await withServer(service, async (url) => {
+    const response = await fetch(`${url}/orders`, {
+      method: 'POST',
+      headers: authenticatedHeaders,
+      body: JSON.stringify({ type: 'delivery' }),
+    });
+    expect(response.status).toBe(409);
+    expect(await response.json()).toEqual({
+      error: 'Checkout conflicted with another request; retry checkout',
+    });
   });
 });

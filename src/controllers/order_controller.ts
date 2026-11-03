@@ -3,7 +3,11 @@ import { z } from 'zod';
 import { Prisma } from '../generated/prisma/client';
 import type { LoginService } from '../services/login_service';
 import type OrderService from '../services/order_service';
-import { OrderProductsNotFoundError } from '../services/order_service';
+import {
+  OrderBasketEmptyError,
+  OrderInsufficientStockError,
+  OrderProductsNotFoundError,
+} from '../services/order_service';
 
 const orderIDParamsSchema = z.object({
   orderID: z.coerce.number().int().positive().max(2147483647),
@@ -15,11 +19,10 @@ const orderItemSchema = z.object({
 });
 
 const createOrderSchema = z.object({
-  customerID: z.number().int().positive().max(2147483647),
-  status: z.string().trim().min(1),
   type: z.string().trim().min(1),
-  orderItems: z.array(orderItemSchema).default([]),
 });
+
+type CustomerResponse = Response<unknown, { customerID: number }>;
 
 const updateOrderSchema = z
   .object({
@@ -27,8 +30,6 @@ const updateOrderSchema = z
     type: z.string().trim().min(1).optional(),
   })
   .refine((data) => data.status !== undefined || data.type !== undefined);
-
-type CustomerResponse = Response<unknown, { customerID: number }>;
 
 function isRecordNotFound(error: unknown): boolean {
   return (
@@ -88,6 +89,29 @@ export class OrderController {
         }),
       );
     } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2034'
+      ) {
+        res.status(409).json({
+          error: 'Checkout conflicted with another request; retry checkout',
+        });
+        return;
+      }
+
+      if (error instanceof OrderBasketEmptyError) {
+        res.status(400).json({ error: error.message });
+        return;
+      }
+
+      if (error instanceof OrderInsufficientStockError) {
+        res.status(409).json({
+          error: 'Insufficient stock',
+          productIDs: error.productIDs,
+        });
+        return;
+      }
+
       if (error instanceof OrderProductsNotFoundError) {
         res.status(400).json({
           error: 'Order contains unknown products',

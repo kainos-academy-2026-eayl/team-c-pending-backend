@@ -20,9 +20,7 @@ test('order service delegates order operations to the repository', async () => {
   await expect(service.findOrderByID(1, 42)).resolves.toBe(order);
   const createData = {
     customerID: 42,
-    status: 'pending',
     type: 'delivery',
-    orderItems: [{ productID: 7, quantity: 2 }],
   };
   await expect(service.createOrder(createData)).resolves.toBe(order);
   const updateData = { status: 'processing' };

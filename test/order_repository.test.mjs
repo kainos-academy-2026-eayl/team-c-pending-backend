@@ -33,18 +33,23 @@ const transaction = {
     create: vi.fn(),
     delete: vi.fn(),
   },
-  product: { findMany: vi.fn() },
+  product: { findMany: vi.fn(), updateMany: vi.fn() },
   orderItem: { deleteMany: vi.fn() },
+  basketEntry: { findMany: vi.fn(), deleteMany: vi.fn() },
 };
 
 beforeEach(() => {
   vi.resetAllMocks();
   prisma.$transaction.mockImplementation((callback) => callback(transaction));
+  transaction.basketEntry.findMany.mockResolvedValue([
+    { productID: 7, quantity: 2 },
+  ]);
+  transaction.product.updateMany.mockResolvedValue({ count: 1 });
 });
 
 test('order reads include their OrderItem records', async () => {
   const orders = [{ orderID: 1, orderItems: [{ orderItemID: 10 }] }];
-  const repository = new OrderRepository();
+  const repository = new OrderRepository(prisma);
   prisma.order.findMany.mockResolvedValue(orders);
   prisma.order.findUnique.mockResolvedValue(orders[0]);
 
@@ -64,7 +69,7 @@ test('order reads include their OrderItem records', async () => {
 test('create order snapshots current product prices into OrderItem records', async () => {
   const order = { orderID: 1, customerID: 42, orderItems: [] };
   transaction.product.findMany.mockResolvedValue([
-    { productID: 7, price: 4.5 },
+    { productID: 7, price: 4.5, quantity: 2 },
   ]);
   transaction.order.create.mockResolvedValue(order);
   const repository = new OrderRepository();
@@ -74,13 +79,12 @@ test('create order snapshots current product prices into OrderItem records', asy
       customerID: 42,
       status: 'pending',
       type: 'delivery',
-      orderItems: [{ productID: 7, quantity: 2 }],
     }),
   ).resolves.toBe(order);
 
   expect(transaction.product.findMany).toHaveBeenCalledWith({
     where: { productID: { in: [7] } },
-    select: { productID: true, price: true },
+    select: { productID: true, price: true, quantity: true },
   });
   expect(transaction.order.create).toHaveBeenCalledWith({
     data: {
@@ -94,6 +98,23 @@ test('create order snapshots current product prices into OrderItem records', asy
     include: orderInclude,
   });
   expect(prisma.$transaction).toHaveBeenCalledOnce();
+  expect(prisma.$transaction).toHaveBeenCalledWith(expect.any(Function), {
+    isolationLevel: 'Serializable',
+  });
+  expect(transaction.basketEntry.findMany).toHaveBeenCalledExactlyOnceWith({
+    where: { customerID: 42 },
+    select: { productID: true, quantity: true },
+  });
+  expect(transaction.basketEntry.deleteMany).toHaveBeenCalledExactlyOnceWith({
+    where: { customerID: 42 },
+  });
+  expect(transaction.product.updateMany).toHaveBeenCalledExactlyOnceWith({
+    where: { productID: 7, quantity: { gte: 2 } },
+    data: { quantity: { decrement: 2 } },
+  });
+  expect(transaction.order.create.mock.invocationCallOrder[0]).toBeLessThan(
+    transaction.basketEntry.deleteMany.mock.invocationCallOrder[0],
+  );
 });
 
 test('create order rejects product IDs that do not exist', async () => {
@@ -105,37 +126,31 @@ test('create order rejects product IDs that do not exist', async () => {
       customerID: 42,
       status: 'pending',
       type: 'delivery',
-      orderItems: [{ productID: 99, quantity: 1 }],
     }),
   ).rejects.toMatchObject({
     name: 'OrderProductsNotFoundError',
-    productIDs: [99],
+    productIDs: [7],
   });
 
   expect(transaction.order.create).not.toHaveBeenCalled();
+  expect(transaction.basketEntry.deleteMany).not.toHaveBeenCalled();
 });
 
-test('create order without items skips product lookup', async () => {
-  const order = { orderID: 1, orderItems: [] };
-  transaction.order.create.mockResolvedValue(order);
+test('create order rejects an empty basket without writing or clearing it', async () => {
+  transaction.basketEntry.findMany.mockResolvedValue([]);
   const data = {
     customerID: 42,
     status: 'pending',
     type: 'delivery',
-    orderItems: [],
   };
 
-  await expect(new OrderRepository().createOrder(data)).resolves.toBe(order);
-  expect(transaction.product.findMany).not.toHaveBeenCalled();
-  expect(transaction.order.create).toHaveBeenCalledExactlyOnceWith({
-    data: {
-      customerID: 42,
-      status: 'pending',
-      type: 'delivery',
-      orderItems: { create: [] },
-    },
-    include: orderInclude,
+  await expect(new OrderRepository().createOrder(data)).rejects.toMatchObject({
+    name: 'OrderBasketEmptyError',
+    message: 'Basket is empty',
   });
+  expect(transaction.product.findMany).not.toHaveBeenCalled();
+  expect(transaction.order.create).not.toHaveBeenCalled();
+  expect(transaction.basketEntry.deleteMany).not.toHaveBeenCalled();
 });
 
 test('create order rejects an unavailable product price before writing', async () => {
@@ -147,13 +162,147 @@ test('create order rejects an unavailable product price before writing', async (
       customerID: 42,
       status: 'pending',
       type: 'delivery',
-      orderItems: [{ productID: 7, quantity: 1 }],
     }),
   ).rejects.toMatchObject({
     name: 'OrderProductsNotFoundError',
     productIDs: [7],
   });
   expect(transaction.order.create).not.toHaveBeenCalled();
+});
+test.each([
+  [0, [{ productID: 7, quantity: 1 }]],
+  [2, [{ productID: 7, quantity: 3 }]],
+  [
+    3,
+    [
+      { productID: 7, quantity: 2 },
+      { productID: 7, quantity: 2 },
+    ],
+  ],
+])(
+  'rejects orders exceeding stock %i, including repeated products',
+  async (quantity, orderItems) => {
+    transaction.basketEntry.findMany.mockResolvedValue(orderItems);
+    transaction.product.findMany.mockResolvedValue([
+      { productID: 7, price: 4.5, quantity },
+    ]);
+    await expect(
+      new OrderRepository().createOrder({
+        customerID: 42,
+        status: 'pending',
+        type: 'delivery',
+      }),
+    ).rejects.toMatchObject({
+      name: 'OrderInsufficientStockError',
+      productIDs: [7],
+    });
+    expect(transaction.order.create).not.toHaveBeenCalled();
+    expect(transaction.basketEntry.deleteMany).not.toHaveBeenCalled();
+  },
+);
+
+test('allows repeated products whose combined quantity exactly matches stock', async () => {
+  transaction.basketEntry.findMany.mockResolvedValue([
+    { productID: 7, quantity: 1 },
+    { productID: 8, quantity: 2 },
+    { productID: 7, quantity: 2 },
+  ]);
+  transaction.product.findMany.mockResolvedValue([
+    { productID: 7, price: 4.5, quantity: 3 },
+    { productID: 8, price: 2, quantity: 10 },
+  ]);
+  const order = { orderID: 1, orderItems: [] };
+  transaction.order.create.mockResolvedValue(order);
+  await expect(
+    new OrderRepository().createOrder({
+      customerID: 42,
+      status: 'pending',
+      type: 'delivery',
+    }),
+  ).resolves.toBe(order);
+  expect(transaction.order.create).toHaveBeenCalledExactlyOnceWith({
+    data: {
+      customerID: 42,
+      status: 'pending',
+      type: 'delivery',
+      orderItems: {
+        create: [
+          { productID: 7, quantity: 1, unitPrice: 4.5 },
+          { productID: 8, quantity: 2, unitPrice: 2 },
+          { productID: 7, quantity: 2, unitPrice: 4.5 },
+        ],
+      },
+    },
+    include: orderInclude,
+  });
+  expect(transaction.product.updateMany.mock.calls).toEqual([
+    [
+      {
+        where: { productID: 7, quantity: { gte: 3 } },
+        data: { quantity: { decrement: 3 } },
+      },
+    ],
+    [
+      {
+        where: { productID: 8, quantity: { gte: 2 } },
+        data: { quantity: { decrement: 2 } },
+      },
+    ],
+  ]);
+});
+
+test('rejects a checkout when a concurrent stock deduction wins', async () => {
+  transaction.product.findMany.mockResolvedValue([
+    { productID: 7, price: 4.5, quantity: 2 },
+  ]);
+  transaction.product.updateMany.mockResolvedValue({ count: 0 });
+
+  await expect(
+    new OrderRepository().createOrder({
+      customerID: 42,
+      type: 'delivery',
+    }),
+  ).rejects.toMatchObject({
+    name: 'OrderInsufficientStockError',
+    productIDs: [7],
+  });
+  expect(transaction.order.create).not.toHaveBeenCalled();
+  expect(transaction.basketEntry.deleteMany).not.toHaveBeenCalled();
+});
+
+test('order creation failures leave the basket untouched', async () => {
+  const error = new Error('Order creation failed');
+  transaction.product.findMany.mockResolvedValue([
+    { productID: 7, price: 4.5, quantity: 3 },
+  ]);
+  transaction.order.create.mockRejectedValue(error);
+
+  await expect(
+    new OrderRepository().createOrder({
+      customerID: 42,
+      status: 'pending',
+      type: 'delivery',
+    }),
+  ).rejects.toBe(error);
+  expect(transaction.basketEntry.deleteMany).not.toHaveBeenCalled();
+});
+
+test('basket clearing failures reject the checkout transaction', async () => {
+  const error = new Error('Basket clearing failed');
+  transaction.product.findMany.mockResolvedValue([
+    { productID: 7, price: 4.5, quantity: 3 },
+  ]);
+  transaction.order.create.mockResolvedValue({ orderID: 1 });
+  transaction.basketEntry.deleteMany.mockRejectedValue(error);
+
+  await expect(
+    new OrderRepository().createOrder({
+      customerID: 42,
+      status: 'pending',
+      type: 'delivery',
+    }),
+  ).rejects.toBe(error);
+  expect(transaction.order.create).toHaveBeenCalledOnce();
 });
 test('update scopes the order to its customer', async () => {
   const order = { orderID: 1, customerID: 43 };
@@ -185,6 +334,6 @@ test('delete removes OrderItems before deleting their order atomically', async (
     where: { orderID: 1 },
   });
   expect(transaction.order.delete).toHaveBeenCalledWith({
-    where: { orderID: 1 },
+    where: { orderID: 1, customerID: 42 },
   });
 });
