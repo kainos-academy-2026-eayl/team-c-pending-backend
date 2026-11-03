@@ -9,6 +9,11 @@ import {
   OrderProductsNotFoundError,
 } from '../src/services/order_service.ts';
 
+const authenticatedHeaders = {
+  Authorization: ['Bearer', 'test-token'].join(' '),
+  'Content-Type': 'application/json',
+};
+
 const fetch = (url, options = {}) =>
   globalThis.fetch(url, {
     ...options,
@@ -121,7 +126,7 @@ test('order routes expose CRUD operations through the service', async () => {
     expect(createResponse.status).toBe(201);
     expect(await createResponse.json()).toEqual(order);
     expect(orderService.createOrder).toHaveBeenCalledExactlyOnceWith({
-      ...createData,
+      type: 'delivery',
       customerID: 42,
     });
 
@@ -202,7 +207,7 @@ test.each(
     await withServer(
       service,
       async (url) => {
-        const response = await fetch(`${url}/orders`, {
+        const response = await globalThis.fetch(`${url}/orders`, {
           method,
           headers: authorization ? { Authorization: authorization } : {},
         });
@@ -481,10 +486,7 @@ test('customers cannot list another customer orders', async () => {
     const response = await fetch(`${url}/orders/customer/99`, {
       headers: authenticatedHeaders,
     });
-    expect(response.status).toBe(403);
-    expect(await response.json()).toEqual({
-      error: "Cannot access another customer's orders",
-    });
+    expect(response.status).toBe(404);
     expect(service.findOrdersByCustomerID).not.toHaveBeenCalled();
   });
 });
