@@ -45,9 +45,26 @@ test('product repository delegates all operations to Prisma', async () => {
   expect(prisma.product.findMany).toHaveBeenLastCalledWith({
     where: { category: data.category, hide: false },
   });
+  await expect(repository.getProductCategories()).resolves.toEqual([
+    data.category,
+  ]);
+  expect(prisma.product.findMany).toHaveBeenLastCalledWith({
+    where: { hide: false },
+    distinct: ['category'],
+    select: { category: true },
+  });
   await expect(repository.findByID(product.productID)).resolves.toBe(product);
   expect(prisma.product.findUnique).toHaveBeenLastCalledWith({
     where: { productID: product.productID },
+    include: {
+      reviews: {
+        include: {
+          customer: {
+            select: { customerID: true, firstName: true, lastName: true },
+          },
+        },
+      },
+    },
   });
   await expect(repository.create(data)).resolves.toBe(product);
   expect(prisma.product.create).toHaveBeenLastCalledWith({ data });
@@ -114,12 +131,14 @@ test.each([{ productID: 1, name: 'Desk lamp' }, null])(
 
 test('product service delegates its operations to the repository', async () => {
   const product = { productID: 1, name: 'Desk lamp', category: 'lighting' };
+  const categories = ['lighting', 'kitchen'];
   const repository = {
     findMany: vi.fn().mockResolvedValue([product]),
     findManyForAdmin: vi.fn().mockResolvedValue([product]),
     findByID: vi.fn().mockResolvedValue(product),
     findByCategory: vi.fn().mockResolvedValue([product]),
     create: vi.fn().mockResolvedValue(product),
+    getProductCategories: vi.fn().mockResolvedValue(categories),
   };
   const service = new ProductService(repository);
 
@@ -129,6 +148,7 @@ test('product service delegates its operations to the repository', async () => {
   await expect(service.findByCategory(product.category)).resolves.toEqual([
     product,
   ]);
+  await expect(service.getProductCategories()).resolves.toEqual(categories);
 
   const data = {
     name: 'Desk lamp',
@@ -148,5 +168,6 @@ test('product service delegates its operations to the repository', async () => {
   expect(repository.findByCategory).toHaveBeenCalledExactlyOnceWith(
     product.category,
   );
+  expect(repository.getProductCategories).toHaveBeenCalledOnce();
   expect(repository.create).toHaveBeenCalledExactlyOnceWith(data);
 });

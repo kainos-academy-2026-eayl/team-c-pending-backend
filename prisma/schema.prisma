@@ -16,6 +16,7 @@ model Customer {
   role          String
   basketEntries BasketEntry[]
   orders        Order[]
+  reviews       Review[]
 }
 
 model Product {
@@ -29,6 +30,7 @@ model Product {
   hide          Boolean       @default(false)
   basketEntries BasketEntry[]
   orderItems    OrderItem[]
+  reviews       Review[]
 }
 
 model Order {
@@ -59,6 +61,17 @@ model BasketEntry {
   customerID Int
   productID  Int
   quantity   Int
+  customer   Customer @relation(fields: [customerID], references: [customerID])
+  product    Product  @relation(fields: [productID], references: [productID])
+
+  @@id([customerID, productID])
+}
+
+model Review {
+  customerID Int
+  productID  Int
+  rating     Int
+  comment    String?
   customer   Customer @relation(fields: [customerID], references: [customerID])
   product    Product  @relation(fields: [productID], references: [productID])
 

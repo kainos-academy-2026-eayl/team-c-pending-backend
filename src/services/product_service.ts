@@ -12,7 +12,7 @@ export class ProductService {
     return this.productRepository.findManyForAdmin();
   }
 
-  async findByID(productID: number): Promise<Product | null> {
+  findByID(productID: number): Promise<Product | null> {
     return this.productRepository.findByID(productID);
   }
 
@@ -47,5 +47,9 @@ export class ProductService {
     >,
   ): Promise<Product> {
     return this.productRepository.update(productID, data);
+  }
+
+  async getProductCategories(): Promise<string[]> {
+    return this.productRepository.getProductCategories();
   }
 }
