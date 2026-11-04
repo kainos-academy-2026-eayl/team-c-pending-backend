@@ -26,13 +26,11 @@ const createReviewSchema = z.object({
 
 // this basically creates a controller for product projects and what a product as a class should look like
 export class ProductController {
-  constructor(private productService: ProductService) { }
-
+  constructor(private productService: ProductService) {}
 
   async getBestSellers(res: Response): Promise<void> {
     res.json(await this.productService.findBestSellers());
   }
-
 
   async getProductByID(req: Request, res: Response): Promise<void> {
     const result = productIDParamsSchema.safeParse(req.params);
@@ -43,7 +41,6 @@ export class ProductController {
       });
       return;
     }
-
 
     const product = await this.productService.findByID(result.data.productID);
     if (!product) {

@@ -150,7 +150,7 @@ test.each([{ productID: 1, name: 'Desk lamp' }, null])(
     };
 
     await controller.getProductByID(mockReq, mockRes);
-    
+
     expect(mockService.findByID).toHaveBeenCalledExactlyOnceWith(1);
     if (product) {
       expect(mockRes.json).toHaveBeenCalledWith(product);
