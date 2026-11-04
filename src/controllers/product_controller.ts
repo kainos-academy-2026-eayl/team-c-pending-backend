@@ -1,7 +1,6 @@
 import { type Request, type Response, Router } from 'express';
 import { z } from 'zod';
-import type { Product } from '../generated/prisma/browser';
-import prisma from '../prismaClient';
+import type { ProductService } from '../services/product_service';
 
 const categoryQuerySchema = z.object({
   category: z.string().trim().min(1),
@@ -20,54 +19,43 @@ const createProductSchema = z.object({
   image: z.string().nullable().optional(),
 });
 
-interface ProductService {
-  findAll(): Promise<Product[]>;
-  findBestSellers(): Promise<Product[]>;
-  findByID(productID: number): Promise<Product | null>;
-  findByCategory(category: string): Promise<Product[]>;
-  create(
-    data: Pick<
-      Product,
-      'name' | 'price' | 'description' | 'category' | 'quantity' | 'image'
-    >,
-  ): Promise<Product>;
-}
+const createReviewSchema = z.object({
+  message: z.string().optional(),
+  rating: z.number().int().min(1).max(5),
+});
 
 // this basically creates a controller for product projects and what a product as a class should look like
 export class ProductController {
   constructor(private productService: ProductService) {}
 
+
   async getBestSellers(res: Response): Promise<void> {
     res.json(await this.productService.findBestSellers());
   }
 
-  async getProduct(req: Request, res: Response): Promise<void> {
-    const result = productIDParamsSchema
-      .refine(({ productID }) => productID <= 2147483647, {
-        path: ['productID'],
-        message: 'Product id must be at most 2147483647',
-      })
-      .safeParse(req.params);
+
+  async getProductByID(req: Request, res: Response): Promise<void> {
+    const result = productIDParamsSchema.safeParse(req.params);
     if (!result.success) {
-      res
-        .status(400)
-        .json({ error: 'Invalid product id', issues: result.error.issues });
+      res.status(400).json({
+        error: 'Invalid product id',
+        issues: result.error.issues,
+      });
       return;
     }
+
+
     const product = await this.productService.findByID(result.data.productID);
     if (!product) {
       res.status(404).json({ error: 'Product not found' });
       return;
     }
+
     res.json(product);
   }
 
   async getProductCategories(res: Response): Promise<void> {
-    const categories = await prisma.product.findMany({
-      distinct: ['category'],
-      select: { category: true },
-    });
-    res.json(categories.map((c) => c.category));
+    res.json(await this.productService.getProductCategories());
   }
 
   async getAllProducts(res: Response): Promise<void> {
@@ -140,7 +128,7 @@ export class ProductController {
       return;
     }
 
-    const product = await this.findByProductID(result.data.productID);
+    const product = await this.productService.findByID(result.data.productID);
     const stockAmount = product ? product.quantity : 0;
     res.json({ inStock: stockAmount > 0 });
   }
@@ -166,10 +154,37 @@ export class ProductController {
     });
     res.json('All okay');
   }
-  findByProductID(productID: number): Promise<Product | null> {
-    return prisma.product.findUnique({
-      where: { productID },
+  async createReview(req: Request, res: Response): Promise<void> {
+    const token = req.get('Authorization')?.match(/^Bearer\s+(\S+)$/i)?.[1];
+    if (!token) {
+      res.status(401).json({ error: 'A Bearer token is required' });
+      return;
+    }
+
+    const customerID =
+      await res.app.locals.loginService.getCustomerIDFromToken(token);
+    if (!customerID) {
+      res.status(401).json({ error: 'Invalid or expired token' });
+      return;
+    }
+
+    const result = createReviewSchema.safeParse(req.body);
+    if (!result.success) {
+      res.status(400).json({
+        error: 'Invalid review request',
+        issues: result.error.issues,
+      });
+      return;
+    }
+
+    const { rating, message } = result.data;
+    await res.app.locals.reviewService.create({
+      productID: parseInt(req.params.productID as string, 10),
+      customerID,
+      rating,
+      comment: message ?? null,
     });
+    res.status(200).send();
   }
 }
 
@@ -189,6 +204,10 @@ export function createProductRouter(productService: ProductService): Router {
   router.post('/', (req, res) => controller.createProduct(req, res));
   router.get('/:productID/in-stock', (req, res) =>
     controller.getIsInStock(req, res),
+  );
+  router.get('/:productID', (req, res) => controller.getProductByID(req, res));
+  router.post('/:productID/reviews', (req, res) =>
+    controller.createReview(req, res),
   );
 
   return router;

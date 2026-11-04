@@ -2,6 +2,7 @@ import type BasketService from './services/basket_service';
 import type { CustomerService } from './services/customer_service';
 import type { LoginService } from './services/login_service';
 import type { ProductService } from './services/product_service';
+import type ReviewService from './services/review_service';
 
 declare global {
   namespace Express {
@@ -10,6 +11,7 @@ declare global {
       customerService: CustomerService;
       productService: ProductService;
       basketService: BasketService;
+      reviewService: ReviewService;
     }
   }
 }

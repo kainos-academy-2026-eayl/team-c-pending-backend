@@ -12,12 +12,14 @@ import BasketRepository from './prisma_repo/basket_repository';
 import { CustomerRepository } from './prisma_repo/customer_repository';
 import { OrderRepository } from './prisma_repo/order_repository';
 import { ProductRepository } from './prisma_repo/product_repository';
+import ReviewRepository from './prisma_repo/review_repository';
 import prisma from './prismaClient';
 import BasketService from './services/basket_service';
 import { CustomerService } from './services/customer_service';
 import { LoginService } from './services/login_service';
 import OrderService from './services/order_service';
 import { ProductService } from './services/product_service';
+import ReviewService from './services/review_service';
 
 export function createApp(): Express {
   const app = express();
@@ -36,7 +38,7 @@ export function createApp(): Express {
   const orderService = new OrderService(orderRepository);
 
   app.locals.basketService = new BasketService(new BasketRepository(prisma));
-
+  app.locals.reviewService = new ReviewService(new ReviewRepository());
   app.locals.customerService = customerService;
   app.locals.loginService = loginService;
 
