@@ -9,9 +9,21 @@ export class CustomerService {
     return this.CustomerRepository.findMany();
   }
 
+  delete(customerID: number): Promise<Customer> {
+    return this.CustomerRepository.delete(customerID);
+  }
+
   async findByID(customerID: number): Promise<Customer | null> {
     return this.CustomerRepository.findByID(customerID);
   }
+
+  update(
+    customerID: number,
+    data: Partial<Pick<Customer, 'firstName' | 'lastName' | 'email'>>,
+  ): Promise<Customer> {
+    return this.CustomerRepository.update(customerID, data);
+  }
+
   async CheckRole(customerID: number): Promise<Customer> {
     return this.CustomerRepository.CheckRole(customerID);
   }

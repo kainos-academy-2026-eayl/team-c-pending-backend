@@ -75,6 +75,41 @@ test('order routes reject missing and invalid bearer tokens', async () => {
   );
 });
 
+test.each([
+  [null, 401],
+  [{ role: 'customer' }, 403],
+  [{ role: 'Admin' }, 200],
+])(
+  'admin order listing enforces admin access: %j',
+  async (customer, status) => {
+    const orders = [
+      { orderID: 2, customerID: 7 },
+      { orderID: 1, customerID: 42 },
+    ];
+    const service = { findAllForAdmin: vi.fn().mockResolvedValue(orders) };
+    await withServer(
+      service,
+      async (url) => {
+        const missing = await globalThis.fetch(`${url}/orders/admin`);
+        expect(missing.status).toBe(401);
+        const response = await globalThis.fetch(`${url}/orders/admin`, {
+          headers: authenticatedHeaders,
+        });
+        expect(response.status).toBe(status);
+        if (status === 200) {
+          expect(await response.json()).toEqual(orders);
+          expect(service.findAllForAdmin).toHaveBeenCalledExactlyOnceWith();
+        } else {
+          expect(service.findAllForAdmin).not.toHaveBeenCalled();
+        }
+      },
+      {
+        getCustomerDetailsFromToken: vi.fn().mockResolvedValue(customer),
+      },
+    );
+  },
+);
+
 test('order routes expose CRUD operations through the service', async () => {
   const order = {
     orderID: 1,

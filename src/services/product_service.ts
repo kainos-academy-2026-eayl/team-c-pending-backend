@@ -12,7 +12,11 @@ export class ProductService {
     return this.productRepository.findBestSellers();
   }
 
-  async findByID(productID: number) {
+  findAllForAdmin(): Promise<Product[]> {
+    return this.productRepository.findManyForAdmin();
+  }
+
+  findByID(productID: number): Promise<Product | null> {
     return this.productRepository.findByID(productID);
   }
 
@@ -29,6 +33,24 @@ export class ProductService {
     return this.productRepository.create({
       ...data,
     });
+  }
+
+  update(
+    productID: number,
+    data: Partial<
+      Pick<
+        Product,
+        | 'name'
+        | 'price'
+        | 'description'
+        | 'category'
+        | 'quantity'
+        | 'image'
+        | 'hide'
+      >
+    >,
+  ): Promise<Product> {
+    return this.productRepository.update(productID, data);
   }
 
   async getProductCategories(): Promise<string[]> {

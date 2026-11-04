@@ -1,4 +1,5 @@
 import type {
+  AdminOrderWithItems,
   CreateOrderData,
   OrderRepository,
   OrderWithItems,
@@ -13,6 +14,10 @@ export {
 
 export default class OrderService {
   constructor(private orderRepository: OrderRepository) {}
+
+  findAllForAdmin(): Promise<AdminOrderWithItems[]> {
+    return this.orderRepository.findAllForAdmin();
+  }
 
   findOrdersByCustomerID(customerID: number): Promise<OrderWithItems[]> {
     return this.orderRepository.findOrdersByCustomerID(customerID);

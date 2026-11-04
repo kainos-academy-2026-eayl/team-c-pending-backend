@@ -47,8 +47,18 @@ beforeEach(() => {
   transaction.product.updateMany.mockResolvedValue({ count: 1 });
 });
 
-test('order reads include their OrderItem records', async () => {
-  const orders = [{ orderID: 1, orderItems: [{ orderItemID: 10 }] }];
+test('order reads include their OrderItem records, including hidden products', async () => {
+  const orders = [
+    {
+      orderID: 1,
+      orderItems: [
+        {
+          orderItemID: 10,
+          product: { productID: 7, name: 'Hidden product', hide: true },
+        },
+      ],
+    },
+  ];
   const repository = new OrderRepository(prisma);
   prisma.order.findMany.mockResolvedValue(orders);
   prisma.order.findUnique.mockResolvedValue(orders[0]);
@@ -66,56 +76,76 @@ test('order reads include their OrderItem records', async () => {
   });
 });
 
-test('create order snapshots current product prices into OrderItem records', async () => {
-  const order = { orderID: 1, customerID: 42, orderItems: [] };
-  transaction.product.findMany.mockResolvedValue([
-    { productID: 7, price: 4.5, quantity: 2 },
-  ]);
-  transaction.order.create.mockResolvedValue(order);
-  const repository = new OrderRepository();
-
-  await expect(
-    repository.createOrder({
-      customerID: 42,
-      status: 'pending',
-      type: 'delivery',
-    }),
-  ).resolves.toBe(order);
-
-  expect(transaction.product.findMany).toHaveBeenCalledWith({
-    where: { productID: { in: [7] } },
-    select: { productID: true, price: true, quantity: true },
-  });
-  expect(transaction.order.create).toHaveBeenCalledWith({
-    data: {
-      customerID: 42,
-      status: 'pending',
-      type: 'delivery',
-      orderItems: {
-        create: [{ productID: 7, quantity: 2, unitPrice: 4.5 }],
-      },
+test('admin order reads select only customer names and sort newest IDs first', async () => {
+  const orders = [
+    { orderID: 2, customerID: 7 },
+    { orderID: 1, customerID: 42 },
+  ];
+  prisma.order.findMany.mockResolvedValue(orders);
+  const repository = new OrderRepository(prisma);
+  await expect(repository.findAllForAdmin()).resolves.toBe(orders);
+  expect(prisma.order.findMany).toHaveBeenCalledWith({
+    include: {
+      ...orderInclude,
+      customer: { select: { firstName: true, lastName: true } },
     },
-    include: orderInclude,
+    orderBy: { orderID: 'desc' },
   });
-  expect(prisma.$transaction).toHaveBeenCalledOnce();
-  expect(prisma.$transaction).toHaveBeenCalledWith(expect.any(Function), {
-    isolationLevel: 'Serializable',
-  });
-  expect(transaction.basketEntry.findMany).toHaveBeenCalledExactlyOnceWith({
-    where: { customerID: 42 },
-    select: { productID: true, quantity: true },
-  });
-  expect(transaction.basketEntry.deleteMany).toHaveBeenCalledExactlyOnceWith({
-    where: { customerID: 42 },
-  });
-  expect(transaction.product.updateMany).toHaveBeenCalledExactlyOnceWith({
-    where: { productID: 7, quantity: { gte: 2 } },
-    data: { quantity: { decrement: 2 } },
-  });
-  expect(transaction.order.create.mock.invocationCallOrder[0]).toBeLessThan(
-    transaction.basketEntry.deleteMany.mock.invocationCallOrder[0],
-  );
 });
+
+test.each([true, false])(
+  'checkout preserves products with hide=%s and snapshots current prices in OrderItems',
+  async (hide) => {
+    const order = { orderID: 1, customerID: 42, orderItems: [] };
+    transaction.product.findMany.mockResolvedValue([
+      { productID: 7, price: 4.5, quantity: 2, hide },
+    ]);
+    transaction.order.create.mockResolvedValue(order);
+    const repository = new OrderRepository();
+
+    await expect(
+      repository.createOrder({
+        customerID: 42,
+        status: 'pending',
+        type: 'delivery',
+      }),
+    ).resolves.toBe(order);
+
+    expect(transaction.product.findMany).toHaveBeenCalledWith({
+      where: { productID: { in: [7] } },
+      select: { productID: true, price: true, quantity: true },
+    });
+    expect(transaction.order.create).toHaveBeenCalledWith({
+      data: {
+        customerID: 42,
+        status: 'pending',
+        type: 'delivery',
+        orderItems: {
+          create: [{ productID: 7, quantity: 2, unitPrice: 4.5 }],
+        },
+      },
+      include: orderInclude,
+    });
+    expect(prisma.$transaction).toHaveBeenCalledOnce();
+    expect(prisma.$transaction).toHaveBeenCalledWith(expect.any(Function), {
+      isolationLevel: 'Serializable',
+    });
+    expect(transaction.basketEntry.findMany).toHaveBeenCalledExactlyOnceWith({
+      where: { customerID: 42 },
+      select: { productID: true, quantity: true },
+    });
+    expect(transaction.basketEntry.deleteMany).toHaveBeenCalledExactlyOnceWith({
+      where: { customerID: 42 },
+    });
+    expect(transaction.product.updateMany).toHaveBeenCalledExactlyOnceWith({
+      where: { productID: 7, quantity: { gte: 2 } },
+      data: { quantity: { decrement: 2 } },
+    });
+    expect(transaction.order.create.mock.invocationCallOrder[0]).toBeLessThan(
+      transaction.basketEntry.deleteMany.mock.invocationCallOrder[0],
+    );
+  },
+);
 
 test('create order rejects product IDs that do not exist', async () => {
   transaction.product.findMany.mockResolvedValue([]);

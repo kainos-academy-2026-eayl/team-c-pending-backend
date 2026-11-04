@@ -27,6 +27,7 @@ model Product {
   category      String
   quantity      Int
   image         String?
+  hide          Boolean       @default(false)
   basketEntries BasketEntry[]
   orderItems    OrderItem[]
   reviews       Review[]
