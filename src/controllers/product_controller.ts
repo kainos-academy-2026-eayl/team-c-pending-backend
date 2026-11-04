@@ -26,7 +26,7 @@ const createReviewSchema = z.object({
 
 // this basically creates a controller for product projects and what a product as a class should look like
 export class ProductController {
-  constructor(private productService: ProductService) {}
+  constructor(private productService: ProductService) { }
 
 
   async getBestSellers(res: Response): Promise<void> {
@@ -200,7 +200,6 @@ export function createProductRouter(productService: ProductService): Router {
     controller.getProductCategories(res),
   );
   router.get('/best-sellers', (_req, res) => controller.getBestSellers(res));
-  router.get('/:productID', (req, res) => controller.getProduct(req, res));
   router.post('/', (req, res) => controller.createProduct(req, res));
   router.get('/:productID/in-stock', (req, res) =>
     controller.getIsInStock(req, res),

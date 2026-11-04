@@ -1,4 +1,5 @@
 import { expect, test, vi } from 'vitest';
+import { ProductController } from '../src/controllers/product_controller.ts';
 
 vi.mock('../src/prismaClient.ts', () => ({
   default: {
@@ -140,13 +141,22 @@ test('product service delegates best-seller ranking', async () => {
 test.each([{ productID: 1, name: 'Desk lamp' }, null])(
   'product controller returns the product lookup result %j',
   async (product) => {
-    prisma.product.findUnique.mockResolvedValue(product);
-    const controller = new ProductController({});
+    const mockService = { findByID: vi.fn().mockResolvedValue(product) };
+    const controller = new ProductController(mockService);
+    const mockReq = { params: { productID: '1' } };
+    const mockRes = {
+      json: vi.fn(),
+      status: vi.fn().mockReturnThis(),
+    };
 
-    await expect(controller.findByProductID(1)).resolves.toBe(product);
-    expect(prisma.product.findUnique).toHaveBeenLastCalledWith({
-      where: { productID: 1 },
-    });
+    await controller.getProductByID(mockReq, mockRes);
+    
+    expect(mockService.findByID).toHaveBeenCalledExactlyOnceWith(1);
+    if (product) {
+      expect(mockRes.json).toHaveBeenCalledWith(product);
+    } else {
+      expect(mockRes.status).toHaveBeenCalledWith(404);
+    }
   },
 );
 
