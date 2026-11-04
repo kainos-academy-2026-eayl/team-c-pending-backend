@@ -1,5 +1,16 @@
 import prisma from '../src/prismaClient';
 import 'dotenv/config';
+import { hash } from 'bcryptjs';
+
+await prisma.customer.create({
+  data: {
+    firstName: 'Admin',
+    lastName: 'Admin',
+    email: 'admin@example.com',
+    password: await hash('admin', 10),
+    role: 'admin',
+  }
+});
 
 await prisma.product.createMany({
   data: [

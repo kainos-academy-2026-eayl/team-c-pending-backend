@@ -1,7 +1,6 @@
 /// <reference path="env.d.ts" />
 
 import express, { type Express } from 'express';
-import 'dotenv/config';
 import basketController from './controllers/basket_controller';
 import utilityRouter from './controllers/health_controller';
 import loginRouter from './controllers/login_controller';
@@ -22,6 +21,7 @@ import { ProductService } from './services/product_service';
 import ReviewService from './services/review_service';
 
 export function createApp(): Express {
+
   const app = express();
 
   app.use(express.json({ limit: '100kb' }));

@@ -1,5 +1,12 @@
-import 'dotenv/config';
-import { createApp } from './app';
+import dotenv from 'dotenv';
+
+if (process.env.ISTEST == "1") {
+  dotenv.config({ path: '.env.test', override: true });
+} else {
+  dotenv.config({ path: '.env' });
+}
+
+const { createApp } = await import('./app');
 
 if (!process.env.PORT) {
   throw new Error('PORT environment variable is not set');
