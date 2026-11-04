@@ -21,7 +21,7 @@ const createProductSchema = z.object({
 
 const createReviewSchema = z.object({
   message: z.string().optional(),
-  rating: z.number().min(1).max(5),
+  rating: z.number().int().min(1).max(5),
 });
 
 // this basically creates a controller for product projects and what a product as a class should look like
