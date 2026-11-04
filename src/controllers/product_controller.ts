@@ -42,7 +42,12 @@ export class ProductController {
   }
 
   async getProduct(req: Request, res: Response): Promise<void> {
-    const result = productIDParamsSchema.safeParse(req.params);
+    const result = productIDParamsSchema
+      .refine(({ productID }) => productID <= 2147483647, {
+        path: ['productID'],
+        message: 'Product id must be at most 2147483647',
+      })
+      .safeParse(req.params);
     if (!result.success) {
       res
         .status(400)
