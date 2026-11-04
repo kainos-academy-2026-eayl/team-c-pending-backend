@@ -1,7 +1,7 @@
 /// <reference path="env.d.ts" />
 
 import express, { type Express } from 'express';
-import { requireAdmin } from './AdminCheck/require_admin';
+import { requireAdmin } from './middleware/require_admin';
 import 'dotenv/config';
 import basketController from './controllers/basket_controller';
 import { createCustomerRouter } from './controllers/customer_controller';

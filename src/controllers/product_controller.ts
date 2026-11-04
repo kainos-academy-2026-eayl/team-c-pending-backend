@@ -1,8 +1,8 @@
 import { type Request, type Response, Router } from 'express';
 import { z } from 'zod';
-import { requireAdmin } from '../AdminCheck/require_admin';
 import type { Product } from '../generated/prisma/browser';
 import { Prisma } from '../generated/prisma/client';
+import { requireAdmin } from '../middleware/require_admin';
 import prisma from '../prismaClient';
 
 const categoryQuerySchema = z.object({

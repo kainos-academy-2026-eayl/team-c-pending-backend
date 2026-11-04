@@ -1,7 +1,7 @@
 import { type Request, type Response, Router } from 'express';
 import { z } from 'zod';
-import { requireAdmin } from '../AdminCheck/require_admin';
 import { Prisma } from '../generated/prisma/client';
+import { requireAdmin } from '../middleware/require_admin';
 import type { LoginService } from '../services/login_service';
 import type OrderService from '../services/order_service';
 import {

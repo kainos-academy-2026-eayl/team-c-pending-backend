@@ -1,8 +1,8 @@
 import { type Request, type Response, Router } from 'express';
 import { z } from 'zod';
-import { requireAdmin } from '../AdminCheck/require_admin';
 import type { Customer } from '../generated/prisma/browser';
 import { Prisma } from '../generated/prisma/client';
+import { requireAdmin } from '../middleware/require_admin';
 import prisma from '../prismaClient';
 import type { CustomerService } from '../services/customer_service';
 
