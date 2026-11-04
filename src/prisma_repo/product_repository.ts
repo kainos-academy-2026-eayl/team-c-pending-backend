@@ -11,8 +11,19 @@ export class ProductRepository {
     return prisma.product.findMany({ where: { category } });
   }
   //finds specific products with IDs
-  findByID(productID: number): Promise<Product | null> {
-    return prisma.product.findUnique({ where: { productID } });
+  findByID(productID: number) {
+    return prisma.product.findUnique({
+      where: { productID },
+      include: {
+        reviews: {
+          include: {
+            customer: {
+              select: { customerID: true, firstName: true, lastName: true },
+            },
+          },
+        },
+      },
+    });
   }
   //finds specific products with categories
   // creates new product in database
@@ -45,5 +56,13 @@ export class ProductRepository {
   // deletes product from database
   delete(productID: number): Promise<Product> {
     return prisma.product.delete({ where: { productID } });
+  }
+
+  async getProductCategories() {
+    const categories = await prisma.product.findMany({
+      distinct: ['category'],
+      select: { category: true },
+    });
+    return categories.map((c) => c.category);
   }
 }
