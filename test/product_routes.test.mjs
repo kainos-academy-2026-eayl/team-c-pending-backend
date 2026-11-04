@@ -77,6 +77,61 @@ test('GET /products returns the public product fields', async () => {
   });
 });
 
+test('GET /products/best-sellers returns ranked products without an ID lookup', async () => {
+  const products = [{ productID: 8, ...validProductData() }];
+  const service = {
+    findBestSellers: vi.fn().mockResolvedValue(products),
+    findByID: vi.fn(),
+  };
+  await withServer(service, async (url) => {
+    const response = await fetch(`${url}/products/best-sellers`);
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual(products);
+    expect(service.findBestSellers).toHaveBeenCalledOnce();
+    expect(service.findByID).not.toHaveBeenCalled();
+  });
+});
+
+test('GET /products/best-sellers propagates ranking failures', async () => {
+  await withServer(
+    {
+      findBestSellers: vi
+        .fn()
+        .mockRejectedValue(new Error('Database unavailable')),
+    },
+    async (url) => {
+      const response = await fetch(`${url}/products/best-sellers`);
+      expect(response.status).toBe(500);
+    },
+  );
+});
+
+test.each([
+  [{ productID: 8, ...validProductData() }, 200],
+  [null, 404],
+])('GET /products/8 handles a product lookup', async (product, status) => {
+  const service = { findByID: vi.fn().mockResolvedValue(product) };
+  await withServer(service, async (url) => {
+    const response = await fetch(`${url}/products/8`);
+    expect(response.status).toBe(status);
+    expect(await response.json()).toEqual(
+      product ?? { error: 'Product not found' },
+    );
+    expect(service.findByID).toHaveBeenCalledExactlyOnceWith(8);
+  });
+});
+
+test.each(['0', '-1', 'invalid', '1.5'])(
+  'GET /products/%s rejects invalid IDs',
+  async (id) => {
+    const service = { findByID: vi.fn() };
+    await withServer(service, async (url) => {
+      expect((await fetch(`${url}/products/${id}`)).status).toBe(400);
+      expect(service.findByID).not.toHaveBeenCalled();
+    });
+  },
+);
+
 test('GET /products/category forwards the category and returns products', async () => {
   const product = {
     productID: 1,

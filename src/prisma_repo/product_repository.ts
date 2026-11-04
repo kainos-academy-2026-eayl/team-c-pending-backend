@@ -2,6 +2,43 @@ import type { Product } from '../generated/prisma/client';
 import prisma from '../prismaClient';
 
 export class ProductRepository {
+  async findBestSellers(): Promise<Product[]> {
+    const rankings = await prisma.orderItem.groupBy({
+      by: ['productID'],
+      where: {
+        quantity: { gt: 0 },
+        itemStatus: { equals: 'active', mode: 'insensitive' },
+        order: {
+          status: {
+            notIn: ['cancelled', 'canceled', 'refunded'],
+            mode: 'insensitive',
+          },
+        },
+      },
+      _sum: { quantity: true },
+      orderBy: [{ _sum: { quantity: 'desc' } }, { productID: 'asc' }],
+      take: 12,
+    });
+
+    if (rankings.length === 0) {
+      return [];
+    }
+
+    const products = await prisma.product.findMany({
+      where: { productID: { in: rankings.map(({ productID }) => productID) } },
+    });
+    const productsByID = new Map(
+      products.map((product) => [product.productID, product]),
+    );
+    return rankings.map(({ productID }) => {
+      const product = productsByID.get(productID);
+      if (!product) {
+        throw new Error(`Ranked product ${productID} no longer exists`);
+      }
+      return product;
+    });
+  }
+
   // gets all products from database
   findMany(): Promise<Product[]> {
     return prisma.product.findMany();

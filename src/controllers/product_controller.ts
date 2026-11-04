@@ -22,6 +22,8 @@ const createProductSchema = z.object({
 
 interface ProductService {
   findAll(): Promise<Product[]>;
+  findBestSellers(): Promise<Product[]>;
+  findByID(productID: number): Promise<Product | null>;
   findByCategory(category: string): Promise<Product[]>;
   create(
     data: Pick<
@@ -34,6 +36,26 @@ interface ProductService {
 // this basically creates a controller for product projects and what a product as a class should look like
 export class ProductController {
   constructor(private productService: ProductService) {}
+
+  async getBestSellers(res: Response): Promise<void> {
+    res.json(await this.productService.findBestSellers());
+  }
+
+  async getProduct(req: Request, res: Response): Promise<void> {
+    const result = productIDParamsSchema.safeParse(req.params);
+    if (!result.success) {
+      res
+        .status(400)
+        .json({ error: 'Invalid product id', issues: result.error.issues });
+      return;
+    }
+    const product = await this.productService.findByID(result.data.productID);
+    if (!product) {
+      res.status(404).json({ error: 'Product not found' });
+      return;
+    }
+    res.json(product);
+  }
 
   async getProductCategories(res: Response): Promise<void> {
     const categories = await prisma.product.findMany({
@@ -157,6 +179,8 @@ export function createProductRouter(productService: ProductService): Router {
   router.get('/categories', (_req, res) =>
     controller.getProductCategories(res),
   );
+  router.get('/best-sellers', (_req, res) => controller.getBestSellers(res));
+  router.get('/:productID', (req, res) => controller.getProduct(req, res));
   router.post('/', (req, res) => controller.createProduct(req, res));
   router.get('/:productID/in-stock', (req, res) =>
     controller.getIsInStock(req, res),

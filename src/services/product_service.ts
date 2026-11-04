@@ -8,6 +8,10 @@ export class ProductService {
     return this.productRepository.findMany();
   }
 
+  findBestSellers(): Promise<Product[]> {
+    return this.productRepository.findBestSellers();
+  }
+
   async findByID(productID: number): Promise<Product | null> {
     return this.productRepository.findByID(productID);
   }
