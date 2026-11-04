@@ -9,7 +9,7 @@ await prisma.customer.create({
     email: 'admin@example.com',
     password: await hash('admin', 10),
     role: 'admin',
-  }
+  },
 });
 
 await prisma.product.createMany({

@@ -1,6 +1,6 @@
 import dotenv from 'dotenv';
 
-if (process.env.ISTEST == "1") {
+if (process.env.ISTEST === '1') {
   dotenv.config({ path: '.env.test', override: true });
 } else {
   dotenv.config({ path: '.env' });

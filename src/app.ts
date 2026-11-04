@@ -21,7 +21,6 @@ import { ProductService } from './services/product_service';
 import ReviewService from './services/review_service';
 
 export function createApp(): Express {
-
   const app = express();
 
   app.use(express.json({ limit: '100kb' }));
