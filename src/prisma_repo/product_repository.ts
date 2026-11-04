@@ -15,8 +15,19 @@ export class ProductRepository {
     return prisma.product.findMany({ where: { category, hide: false } });
   }
   //finds specific products with IDs
-  findByID(productID: number): Promise<Product | null> {
-    return prisma.product.findUnique({ where: { productID } });
+  findByID(productID: number) {
+    return prisma.product.findUnique({
+      where: { productID },
+      include: {
+        reviews: {
+          include: {
+            customer: {
+              select: { customerID: true, firstName: true, lastName: true },
+            },
+          },
+        },
+      },
+    });
   }
   //finds specific products with categories
   // creates new product in database
@@ -51,5 +62,14 @@ export class ProductRepository {
           ? { ...data, basketEntries: { deleteMany: {} } }
           : data,
     });
+  }
+
+  async getProductCategories() {
+    const categories = await prisma.product.findMany({
+      where: { hide: false },
+      distinct: ['category'],
+      select: { category: true },
+    });
+    return categories.map((c) => c.category);
   }
 }
