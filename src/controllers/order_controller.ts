@@ -1,5 +1,6 @@
 import { type Request, type Response, Router } from 'express';
 import { z } from 'zod';
+import { requireAdmin } from '../AdminCheck/require_admin';
 import { Prisma } from '../generated/prisma/client';
 import type { LoginService } from '../services/login_service';
 import type OrderService from '../services/order_service';
@@ -40,6 +41,10 @@ function isRecordNotFound(error: unknown): boolean {
 
 export class OrderController {
   constructor(private orderService: OrderService) {}
+
+  async getAllForAdmin(res: Response): Promise<void> {
+    res.json(await this.orderService.findAllForAdmin());
+  }
 
   async getAll(res: CustomerResponse): Promise<void> {
     res
@@ -196,6 +201,10 @@ export class OrderController {
 export function createOrderRouter(orderService: OrderService): Router {
   const router = Router();
   const controller = new OrderController(orderService);
+
+  router.get('/admin', requireAdmin, (_req, res) =>
+    controller.getAllForAdmin(res),
+  );
 
   router.use(async (req, res: CustomerResponse, next) => {
     const token = req.get('Authorization')?.match(/^Bearer\s+(\S+)$/i)?.[1];

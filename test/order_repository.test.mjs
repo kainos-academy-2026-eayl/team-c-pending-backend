@@ -76,6 +76,23 @@ test('order reads retain their OrderItem records and hidden products', async () 
   });
 });
 
+test('admin order reads select only customer names and sort newest IDs first', async () => {
+  const orders = [
+    { orderID: 2, customerID: 7 },
+    { orderID: 1, customerID: 42 },
+  ];
+  prisma.order.findMany.mockResolvedValue(orders);
+  const repository = new OrderRepository(prisma);
+  await expect(repository.findAllForAdmin()).resolves.toBe(orders);
+  expect(prisma.order.findMany).toHaveBeenCalledWith({
+    include: {
+      ...orderInclude,
+      customer: { select: { firstName: true, lastName: true } },
+    },
+    orderBy: { orderID: 'desc' },
+  });
+});
+
 test.each([true, false])(
   'checkout preserves basket products with hide=%s and snapshots their prices',
   async (hide) => {
