@@ -8,6 +8,10 @@ export class ProductService {
     return this.productRepository.findMany();
   }
 
+  findBestSellers(): Promise<Product[]> {
+    return this.productRepository.findBestSellers();
+  }
+
   findAllForAdmin(): Promise<Product[]> {
     return this.productRepository.findManyForAdmin();
   }

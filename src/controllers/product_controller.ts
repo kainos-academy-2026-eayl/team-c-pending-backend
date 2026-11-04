@@ -39,6 +39,10 @@ const createReviewSchema = z.object({
 export class ProductController {
   constructor(private productService: ProductService) {}
 
+  async getBestSellers(res: Response): Promise<void> {
+    res.json(await this.productService.findBestSellers());
+  }
+
   async getAdminProducts(res: Response): Promise<void> {
     res.json(await this.productService.findAllForAdmin());
   }
@@ -253,6 +257,7 @@ export function createProductRouter(productService: ProductService): Router {
   router.get('/categories', (_req, res) =>
     controller.getProductCategories(res),
   );
+  router.get('/best-sellers', (_req, res) => controller.getBestSellers(res));
   router.post('/', requireAdmin, (req, res) =>
     controller.createProduct(req, res),
   );

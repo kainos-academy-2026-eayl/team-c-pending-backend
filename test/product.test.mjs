@@ -2,6 +2,7 @@ import { expect, test, vi } from 'vitest';
 
 vi.mock('../src/prismaClient.ts', () => ({
   default: {
+    orderItem: { groupBy: vi.fn() },
     product: {
       findMany: vi.fn(),
       findUnique: vi.fn(),
@@ -106,6 +107,87 @@ test('hiding also preserves other product edits in the atomic basket removal', a
     data: { ...data, basketEntries: { deleteMany: {} } },
   });
 });
+
+test('best sellers rank by active units and restore database ranking order', async () => {
+  prisma.orderItem.groupBy.mockResolvedValue([
+    { productID: 9, _sum: { quantity: 20 } },
+    { productID: 2, _sum: { quantity: 12 } },
+  ]);
+  prisma.product.findMany.mockResolvedValue([
+    { productID: 2 },
+    { productID: 9 },
+  ]);
+  const repository = new ProductRepository();
+  await expect(repository.findBestSellers()).resolves.toEqual([
+    { productID: 9 },
+    { productID: 2 },
+  ]);
+  expect(prisma.orderItem.groupBy).toHaveBeenLastCalledWith({
+    by: ['productID'],
+    where: {
+      quantity: { gt: 0 },
+      itemStatus: { equals: 'active', mode: 'insensitive' },
+      order: {
+        status: {
+          notIn: ['cancelled', 'canceled', 'refunded'],
+          mode: 'insensitive',
+        },
+      },
+    },
+    _sum: { quantity: true },
+    orderBy: [{ _sum: { quantity: 'desc' } }, { productID: 'asc' }],
+    take: 12,
+  });
+  expect(prisma.product.findMany).toHaveBeenLastCalledWith({
+    where: { productID: { in: [9, 2] } },
+  });
+});
+
+test('best sellers return no products when there are no qualifying orders', async () => {
+  prisma.orderItem.groupBy.mockResolvedValue([]);
+  prisma.product.findMany.mockClear();
+  await expect(new ProductRepository().findBestSellers()).resolves.toEqual([]);
+  expect(prisma.product.findMany).not.toHaveBeenCalled();
+});
+
+test('best sellers report inconsistent product data', async () => {
+  prisma.orderItem.groupBy.mockResolvedValue([{ productID: 9 }]);
+  prisma.product.findMany.mockResolvedValue([]);
+  await expect(new ProductRepository().findBestSellers()).rejects.toThrow(
+    'Ranked product 9',
+  );
+});
+
+test('product service delegates best-seller ranking', async () => {
+  const products = [{ productID: 9 }];
+  const repository = { findBestSellers: vi.fn().mockResolvedValue(products) };
+  await expect(
+    new ProductService(repository).findBestSellers(),
+  ).resolves.toEqual(products);
+  expect(repository.findBestSellers).toHaveBeenCalledOnce();
+});
+
+test.each([{ productID: 1, name: 'Desk lamp' }, null])(
+  'product controller returns the product lookup result %j',
+  async (product) => {
+    const mockService = { findByID: vi.fn().mockResolvedValue(product) };
+    const controller = new ProductController(mockService);
+    const mockReq = { params: { productID: '1' } };
+    const mockRes = {
+      json: vi.fn(),
+      status: vi.fn().mockReturnThis(),
+    };
+
+    await controller.getProductByID(mockReq, mockRes);
+
+    expect(mockService.findByID).toHaveBeenCalledExactlyOnceWith(1);
+    if (product) {
+      expect(mockRes.json).toHaveBeenCalledWith(product);
+    } else {
+      expect(mockRes.status).toHaveBeenCalledWith(404);
+    }
+  },
+);
 
 test('hiding propagates failures from the atomic product and basket update', async () => {
   const error = new Error('Basket removal failed');
