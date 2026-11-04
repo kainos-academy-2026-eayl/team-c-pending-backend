@@ -2,13 +2,17 @@ import type { Product } from '../generated/prisma/client';
 import prisma from '../prismaClient';
 
 export class ProductRepository {
-  // gets all products from database
+  // gets visible products for customer browsing
   findMany(): Promise<Product[]> {
+    return prisma.product.findMany({ where: { hide: false } });
+  }
+
+  findManyForAdmin(): Promise<Product[]> {
     return prisma.product.findMany();
   }
 
   findByCategory(category: string): Promise<Product[]> {
-    return prisma.product.findMany({ where: { category } });
+    return prisma.product.findMany({ where: { category, hide: false } });
   }
   //finds specific products with IDs
   findByID(productID: number) {
@@ -47,19 +51,22 @@ export class ProductRepository {
       description: string;
       category: string;
       quantity: number;
-      image?: string;
+      image?: string | null;
+      hide: boolean;
     }>,
-    // hashes passsword being updated
   ): Promise<Product> {
-    return prisma.product.update({ where: { productID }, data });
-  }
-  // deletes product from database
-  delete(productID: number): Promise<Product> {
-    return prisma.product.delete({ where: { productID } });
+    return prisma.product.update({
+      where: { productID },
+      data:
+        data.hide === true
+          ? { ...data, basketEntries: { deleteMany: {} } }
+          : data,
+    });
   }
 
   async getProductCategories() {
     const categories = await prisma.product.findMany({
+      where: { hide: false },
       distinct: ['category'],
       select: { category: true },
     });

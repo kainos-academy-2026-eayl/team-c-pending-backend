@@ -1,8 +1,10 @@
 /// <reference path="env.d.ts" />
 
 import express, { type Express } from 'express';
+import { requireAdmin } from './middleware/require_admin';
 import 'dotenv/config';
 import basketController from './controllers/basket_controller';
+import { createCustomerRouter } from './controllers/customer_controller';
 import utilityRouter from './controllers/health_controller';
 import loginRouter from './controllers/login_controller';
 import { createOrderRouter } from './controllers/order_controller';
@@ -46,8 +48,10 @@ export function createApp(): Express {
   app.use('/', loginRouter);
   app.use('/', utilityRouter);
   app.use('/products', createProductRouter(productService));
+  app.use('/customers', createCustomerRouter(customerService));
   app.use('/basket', basketController);
   app.use('/orders', createOrderRouter(orderService));
+  app.use('/admin', requireAdmin);
 
   return app;
 }

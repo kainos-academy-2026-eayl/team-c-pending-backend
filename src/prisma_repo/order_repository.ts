@@ -17,6 +17,15 @@ export type OrderWithItems = Prisma.OrderGetPayload<{
   include: typeof orderInclude;
 }>;
 
+const adminOrderInclude = {
+  ...orderInclude,
+  customer: { select: { firstName: true, lastName: true } },
+} satisfies Prisma.OrderInclude;
+
+export type AdminOrderWithItems = Prisma.OrderGetPayload<{
+  include: typeof adminOrderInclude;
+}>;
+
 export type CreateOrderData = {
   customerID: number;
   type: string;
@@ -47,6 +56,13 @@ export class OrderProductsNotFoundError extends Error {
 
 export class OrderRepository {
   constructor(private client: PrismaClient = prisma) {}
+
+  findAllForAdmin(): Promise<AdminOrderWithItems[]> {
+    return this.client.order.findMany({
+      include: adminOrderInclude,
+      orderBy: { orderID: 'desc' },
+    });
+  }
 
   findOrdersByCustomerID(customerID: number): Promise<OrderWithItems[]> {
     return this.client.order.findMany({

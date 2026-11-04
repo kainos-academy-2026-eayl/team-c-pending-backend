@@ -3,6 +3,10 @@ import { beforeEach, expect, test, vi } from 'vitest';
 
 vi.mock('../src/prismaClient.ts', () => ({
   default: {
+    $transaction: vi.fn(),
+    orderItem: { deleteMany: vi.fn() },
+    order: { deleteMany: vi.fn() },
+    basketEntry: { deleteMany: vi.fn() },
     customer: {
       findMany: vi.fn(),
       findUnique: vi.fn(),
@@ -29,6 +33,7 @@ let repository;
 
 beforeEach(() => {
   vi.resetAllMocks();
+  prisma.$transaction.mockImplementation((run) => run(prisma));
   repository = new CustomerRepository();
 });
 
@@ -141,9 +146,35 @@ test('delete uses the customer ID and returns the deleted customer', async () =>
   prisma.customer.delete.mockResolvedValue(customer);
 
   await expect(repository.delete(customer.customerID)).resolves.toBe(customer);
+  expect(prisma.$transaction).toHaveBeenCalledOnce();
+  expect(prisma.orderItem.deleteMany).toHaveBeenCalledExactlyOnceWith({
+    where: { order: { customerID: customer.customerID } },
+  });
+  expect(prisma.order.deleteMany).toHaveBeenCalledExactlyOnceWith({
+    where: { customerID: customer.customerID },
+  });
+  expect(prisma.basketEntry.deleteMany).toHaveBeenCalledExactlyOnceWith({
+    where: { customerID: customer.customerID },
+  });
+  expect(prisma.orderItem.deleteMany.mock.invocationCallOrder[0]).toBeLessThan(
+    prisma.order.deleteMany.mock.invocationCallOrder[0],
+  );
+  expect(
+    prisma.basketEntry.deleteMany.mock.invocationCallOrder[0],
+  ).toBeLessThan(prisma.customer.delete.mock.invocationCallOrder[0]);
   expect(prisma.customer.delete).toHaveBeenCalledExactlyOnceWith({
     where: { customerID: customer.customerID },
   });
+});
+
+test('delete stops and propagates errors if related records cannot be deleted', async () => {
+  const error = new Error('Deletion failed');
+  prisma.orderItem.deleteMany.mockRejectedValue(error);
+
+  await expect(repository.delete(customer.customerID)).rejects.toBe(error);
+  expect(prisma.order.deleteMany).not.toHaveBeenCalled();
+  expect(prisma.basketEntry.deleteMany).not.toHaveBeenCalled();
+  expect(prisma.customer.delete).not.toHaveBeenCalled();
 });
 
 test.each([
