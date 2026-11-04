@@ -80,12 +80,17 @@ test('customer service delegates its operations to the repository', async () => 
   const repository = {
     findMany: vi.fn().mockResolvedValue([customer]),
     findByID: vi.fn().mockResolvedValue(customer),
+    update: vi.fn().mockResolvedValue(customer),
     create: vi.fn().mockResolvedValue(customer),
   };
   const service = new CustomerService(repository);
 
   await expect(service.findAll()).resolves.toEqual([customer]);
   await expect(service.findByID(customer.customerID)).resolves.toBe(customer);
+  const changes = { firstName: 'Updated' };
+  await expect(service.update(customer.customerID, changes)).resolves.toBe(
+    customer,
+  );
   const data = {
     firstname: 'Test',
     lastname: 'Customer',
@@ -97,6 +102,10 @@ test('customer service delegates its operations to the repository', async () => 
   expect(repository.findMany).toHaveBeenCalledOnce();
   expect(repository.findByID).toHaveBeenCalledExactlyOnceWith(
     customer.customerID,
+  );
+  expect(repository.update).toHaveBeenCalledExactlyOnceWith(
+    customer.customerID,
+    changes,
   );
   expect(repository.create).toHaveBeenCalledExactlyOnceWith({
     ...data,
