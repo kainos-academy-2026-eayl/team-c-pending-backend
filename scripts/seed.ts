@@ -10,7 +10,7 @@ await prisma.product.createMany({
       quantity: 10,
       category: 'Dispenser',
       image:
-        'https://images.unsplash.com/photo-1560806887-1e4cd0b6cbd6?auto=format&fit=crop&w=512&h=512&q=80',
+        'https://prashanthihomecarelabsanddiagnostics.com/wp-content/uploads/2026/04/Oxygen-Concentrator.webp',
     },
     {
       name: 'OxyFlow Pro Dispenser',
@@ -19,7 +19,7 @@ await prisma.product.createMany({
       quantity: 15,
       category: 'Dispenser',
       image:
-        'https://images.unsplash.com/photo-1571771894821-ce9b6c11b08e?auto=format&fit=crop&w=512&h=512&q=80',
+        'https://image.made-in-china.com/2f0j00aCoqfnvkETcm/Medical-Equipment-5-Liter-Oxygen-Concentrator-for-Hospital-with-93-High-Purity-Produce-Oxygen.jpg',
     },
     {
       name: 'OxyFlow Mini Dispenser',
@@ -28,7 +28,7 @@ await prisma.product.createMany({
       quantity: 12,
       category: 'Dispenser',
       image:
-        'https://images.unsplash.com/photo-1547514701-42782101795e?auto=format&fit=crop&w=512&h=512&q=80',
+        'https://image.made-in-china.com/2f0j00nUFbPSOIQekv/Medical-Equipment-3-Liter-Portable-Oxygen-Concentrator-with-93-High-Purity-Hospital-Equipment.jpg',
     },
     {
       name: 'PureAir Oxygen Tank 5L',
@@ -37,7 +37,7 @@ await prisma.product.createMany({
       quantity: 9,
       category: 'Tanks',
       image:
-        'https://images.unsplash.com/photo-1523049673857-eb18f1d7b578?auto=format&fit=crop&w=512&h=512&q=80',
+        'https://www.shutterstock.com/image-photo/hospital-medical-gas-oxygen-flowmeter-concentrator-260nw-2468254537.jpg',
     },
     {
       name: 'PureAir Oxygen Tank 10L',
@@ -46,7 +46,7 @@ await prisma.product.createMany({
       quantity: 14,
       category: 'Tanks',
       image:
-        'https://images.unsplash.com/photo-1445282768818-728615cc910a?auto=format&fit=crop&w=512&h=512&q=80',
+        'https://www.shutterstock.com/image-photo/oxygen-supply-regulation-valve-hospital-room-260nw-2468254529.jpg',
     },
     {
       name: 'PureAir Emergency Tank',
@@ -55,7 +55,7 @@ await prisma.product.createMany({
       quantity: 7,
       category: 'Tanks',
       image:
-        'https://images.unsplash.com/photo-1584270354949-c26b0d5b4a0c?auto=format&fit=crop&w=512&h=512&q=80',
+        'https://www.shutterstock.com/image-photo/set-icon-oxygen-tank-260nw-2474183821.jpg',
     },
     {
       name: 'PureAir Lightweight Tank',
