@@ -5,7 +5,8 @@ await prisma.product.createMany({
   data: [
     {
       name: 'OxyFlow Home Dispenser',
-      description: 'Compact oxygen dispensing unit designed for home use with adjustable flow settings.',
+      description:
+        'Compact oxygen dispensing unit designed for home use with adjustable flow settings.',
       price: 0.5,
       quantity: 10,
       category: 'Dispenser',
@@ -14,7 +15,8 @@ await prisma.product.createMany({
     },
     {
       name: 'OxyFlow Pro Dispenser',
-      description: 'Professional-grade oxygen dispenser offering precise flow control and digital monitoring.',
+      description:
+        'Professional-grade oxygen dispenser offering precise flow control and digital monitoring.',
       price: 0.3,
       quantity: 15,
       category: 'Dispenser',
@@ -23,7 +25,8 @@ await prisma.product.createMany({
     },
     {
       name: 'OxyFlow Mini Dispenser',
-      description: 'Lightweight dispenser ideal for personal oxygen therapy and small spaces.',
+      description:
+        'Lightweight dispenser ideal for personal oxygen therapy and small spaces.',
       price: 0.65,
       quantity: 12,
       category: 'Dispenser',
@@ -32,7 +35,8 @@ await prisma.product.createMany({
     },
     {
       name: 'PureAir Oxygen Tank 5L',
-      description: 'Durable 5-litre oxygen tank suitable for short-term oxygen supply needs.',
+      description:
+        'Durable 5-litre oxygen tank suitable for short-term oxygen supply needs.',
       price: 1.2,
       quantity: 9,
       category: 'Tanks',
@@ -41,7 +45,8 @@ await prisma.product.createMany({
     },
     {
       name: 'PureAir Oxygen Tank 10L',
-      description: 'High-capacity oxygen tank designed for extended oxygen delivery.',
+      description:
+        'High-capacity oxygen tank designed for extended oxygen delivery.',
       price: 1.1,
       quantity: 14,
       category: 'Tanks',
@@ -59,7 +64,8 @@ await prisma.product.createMany({
     },
     {
       name: 'PureAir Lightweight Tank',
-      description: 'Lightweight aluminium oxygen tank for easier transport and storage.',
+      description:
+        'Lightweight aluminium oxygen tank for easier transport and storage.',
       price: 2.4,
       quantity: 11,
       category: 'Tanks',
@@ -68,7 +74,8 @@ await prisma.product.createMany({
     },
     {
       name: 'OxyGo Portable 1',
-      description: 'Portable oxygen concentrator with rechargeable battery and carry case.',
+      description:
+        'Portable oxygen concentrator with rechargeable battery and carry case.',
       price: 2.25,
       quantity: 6,
       category: 'Portable',
@@ -77,7 +84,8 @@ await prisma.product.createMany({
     },
     {
       name: 'OxyGo Portable Plus',
-      description: 'Advanced portable oxygen concentrator with extended battery life.',
+      description:
+        'Advanced portable oxygen concentrator with extended battery life.',
       price: 4.25,
       quantity: 5,
       category: 'Portable',
@@ -86,7 +94,8 @@ await prisma.product.createMany({
     },
     {
       name: 'OxyGo Travel Companion',
-      description: 'Travel-friendly oxygen concentrator approved for use during journeys.',
+      description:
+        'Travel-friendly oxygen concentrator approved for use during journeys.',
       price: 1.5,
       quantity: 10,
       category: 'Portable',
@@ -95,7 +104,8 @@ await prisma.product.createMany({
     },
     {
       name: 'OxyGo Compact',
-      description: 'Compact oxygen delivery system designed for active lifestyles.',
+      description:
+        'Compact oxygen delivery system designed for active lifestyles.',
       price: 3.8,
       quantity: 8,
       category: 'Portable',
@@ -113,7 +123,8 @@ await prisma.product.createMany({
     },
     {
       name: 'BreathEasy Child Mask',
-      description: 'Soft and lightweight oxygen mask suitable for younger users.',
+      description:
+        'Soft and lightweight oxygen mask suitable for younger users.',
       price: 2.6,
       quantity: 13,
       category: 'Masks',
@@ -122,7 +133,8 @@ await prisma.product.createMany({
     },
     {
       name: 'BreathEasy Premium Mask',
-      description: 'Premium oxygen mask with enhanced comfort and adjustable straps.',
+      description:
+        'Premium oxygen mask with enhanced comfort and adjustable straps.',
       price: 3.25,
       quantity: 7,
       category: 'Masks',
@@ -131,7 +143,8 @@ await prisma.product.createMany({
     },
     {
       name: 'BreathEasy Vent Mask',
-      description: 'Venturi-style oxygen mask offering controlled oxygen delivery.',
+      description:
+        'Venturi-style oxygen mask offering controlled oxygen delivery.',
       price: 7.5,
       quantity: 4,
       category: 'Masks',
@@ -140,7 +153,8 @@ await prisma.product.createMany({
     },
     {
       name: 'OxyPure Refill Canister Small',
-      description: 'Small replacement oxygen refill canister for compatible systems.',
+      description:
+        'Small replacement oxygen refill canister for compatible systems.',
       price: 4.1,
       quantity: 6,
       category: 'Refils',
@@ -158,7 +172,8 @@ await prisma.product.createMany({
     },
     {
       name: 'OxyPure Refill Canister Large',
-      description: 'Large-capacity oxygen refill canister designed for extended sessions.',
+      description:
+        'Large-capacity oxygen refill canister designed for extended sessions.',
       price: 5.75,
       quantity: 5,
       category: 'Refils',
@@ -167,7 +182,8 @@ await prisma.product.createMany({
     },
     {
       name: 'OxyPure Travel Refill',
-      description: 'Portable oxygen refill canister ideal for use while traveling.',
+      description:
+        'Portable oxygen refill canister ideal for use while traveling.',
       price: 1.8,
       quantity: 16,
       category: 'Refils',
@@ -176,7 +192,8 @@ await prisma.product.createMany({
     },
     {
       name: 'OxyPure Emergency Refill',
-      description: 'Quick-connect emergency oxygen refill canister for backup supply.',
+      description:
+        'Quick-connect emergency oxygen refill canister for backup supply.',
       price: 6.25,
       quantity: 3,
       category: 'Refils',
