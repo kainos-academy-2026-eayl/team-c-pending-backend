@@ -8,6 +8,7 @@ test('order service delegates order operations to the repository', async () => {
   ];
   const order = orders[0];
   const repository = {
+    findAllForAdmin: vi.fn().mockResolvedValue(orders),
     findOrdersByCustomerID: vi.fn().mockResolvedValue(orders),
     findOrderByID: vi.fn().mockResolvedValue(order),
     createOrder: vi.fn().mockResolvedValue(order),
@@ -16,6 +17,8 @@ test('order service delegates order operations to the repository', async () => {
   };
   const service = new OrderService(repository);
 
+  await expect(service.findAllForAdmin()).resolves.toBe(orders);
+  expect(repository.findAllForAdmin).toHaveBeenCalledExactlyOnceWith();
   await expect(service.findOrdersByCustomerID(42)).resolves.toEqual(orders);
   await expect(service.findOrderByID(1, 42)).resolves.toBe(order);
   const createData = {

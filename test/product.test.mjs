@@ -2,6 +2,7 @@ import { expect, test, vi } from 'vitest';
 
 vi.mock('../src/prismaClient.ts', () => ({
   default: {
+    orderItem: { groupBy: vi.fn() },
     product: {
       findMany: vi.fn(),
       findUnique: vi.fn(),
@@ -32,19 +33,39 @@ test('product repository delegates all operations to Prisma', async () => {
   prisma.product.findUnique.mockResolvedValue(product);
   prisma.product.create.mockResolvedValue(product);
   prisma.product.update.mockResolvedValue(product);
-  prisma.product.delete.mockResolvedValue(product);
 
   await expect(repository.findMany()).resolves.toEqual([product]);
+  expect(prisma.product.findMany).toHaveBeenLastCalledWith({
+    where: { hide: false },
+  });
+  await expect(repository.findManyForAdmin()).resolves.toEqual([product]);
   expect(prisma.product.findMany).toHaveBeenLastCalledWith();
   await expect(repository.findByCategory(data.category)).resolves.toEqual([
     product,
   ]);
   expect(prisma.product.findMany).toHaveBeenLastCalledWith({
-    where: { category: data.category },
+    where: { category: data.category, hide: false },
+  });
+  await expect(repository.getProductCategories()).resolves.toEqual([
+    data.category,
+  ]);
+  expect(prisma.product.findMany).toHaveBeenLastCalledWith({
+    where: { hide: false },
+    distinct: ['category'],
+    select: { category: true },
   });
   await expect(repository.findByID(product.productID)).resolves.toBe(product);
   expect(prisma.product.findUnique).toHaveBeenLastCalledWith({
     where: { productID: product.productID },
+    include: {
+      reviews: {
+        include: {
+          customer: {
+            select: { customerID: true, firstName: true, lastName: true },
+          },
+        },
+      },
+    },
   });
   await expect(repository.create(data)).resolves.toBe(product);
   expect(prisma.product.create).toHaveBeenLastCalledWith({ data });
@@ -56,10 +77,125 @@ test('product repository delegates all operations to Prisma', async () => {
     where: { productID: product.productID },
     data: update,
   });
-  await expect(repository.delete(product.productID)).resolves.toBe(product);
-  expect(prisma.product.delete).toHaveBeenLastCalledWith({
-    where: { productID: product.productID },
+});
+
+test.each([true, false])(
+  'product visibility can be set to %s without deleting the product',
+  async (hide) => {
+    const product = { productID: 1, hide };
+    prisma.product.update.mockResolvedValue(product);
+    const repository = new ProductRepository();
+    const service = new ProductService(repository);
+
+    await expect(service.update(1, { hide })).resolves.toBe(product);
+    expect(prisma.product.update).toHaveBeenLastCalledWith({
+      where: { productID: 1 },
+      data: hide ? { hide, basketEntries: { deleteMany: {} } } : { hide },
+    });
+    expect(prisma.product.delete).not.toHaveBeenCalled();
+  },
+);
+
+test('hiding also preserves other product edits in the atomic basket removal', async () => {
+  const data = { hide: true, name: 'Updated lamp', quantity: 8 };
+  const product = { productID: 1, ...data };
+  prisma.product.update.mockResolvedValue(product);
+
+  await expect(new ProductRepository().update(1, data)).resolves.toBe(product);
+  expect(prisma.product.update).toHaveBeenLastCalledWith({
+    where: { productID: 1 },
+    data: { ...data, basketEntries: { deleteMany: {} } },
   });
+});
+
+test('best sellers rank by active units and restore database ranking order', async () => {
+  prisma.orderItem.groupBy.mockResolvedValue([
+    { productID: 9, _sum: { quantity: 20 } },
+    { productID: 2, _sum: { quantity: 12 } },
+  ]);
+  prisma.product.findMany.mockResolvedValue([
+    { productID: 2 },
+    { productID: 9 },
+  ]);
+  const repository = new ProductRepository();
+  await expect(repository.findBestSellers()).resolves.toEqual([
+    { productID: 9 },
+    { productID: 2 },
+  ]);
+  expect(prisma.orderItem.groupBy).toHaveBeenLastCalledWith({
+    by: ['productID'],
+    where: {
+      quantity: { gt: 0 },
+      itemStatus: { equals: 'active', mode: 'insensitive' },
+      order: {
+        status: {
+          notIn: ['cancelled', 'canceled', 'refunded'],
+          mode: 'insensitive',
+        },
+      },
+    },
+    _sum: { quantity: true },
+    orderBy: [{ _sum: { quantity: 'desc' } }, { productID: 'asc' }],
+    take: 12,
+  });
+  expect(prisma.product.findMany).toHaveBeenLastCalledWith({
+    where: { productID: { in: [9, 2] } },
+  });
+});
+
+test('best sellers return no products when there are no qualifying orders', async () => {
+  prisma.orderItem.groupBy.mockResolvedValue([]);
+  prisma.product.findMany.mockClear();
+  await expect(new ProductRepository().findBestSellers()).resolves.toEqual([]);
+  expect(prisma.product.findMany).not.toHaveBeenCalled();
+});
+
+test('best sellers report inconsistent product data', async () => {
+  prisma.orderItem.groupBy.mockResolvedValue([{ productID: 9 }]);
+  prisma.product.findMany.mockResolvedValue([]);
+  await expect(new ProductRepository().findBestSellers()).rejects.toThrow(
+    'Ranked product 9',
+  );
+});
+
+test('product service delegates best-seller ranking', async () => {
+  const products = [{ productID: 9 }];
+  const repository = { findBestSellers: vi.fn().mockResolvedValue(products) };
+  await expect(
+    new ProductService(repository).findBestSellers(),
+  ).resolves.toEqual(products);
+  expect(repository.findBestSellers).toHaveBeenCalledOnce();
+});
+
+test.each([{ productID: 1, name: 'Desk lamp' }, null])(
+  'product controller returns the product lookup result %j',
+  async (product) => {
+    const mockService = { findByID: vi.fn().mockResolvedValue(product) };
+    const controller = new ProductController(mockService);
+    const mockReq = { params: { productID: '1' } };
+    const mockRes = {
+      json: vi.fn(),
+      status: vi.fn().mockReturnThis(),
+    };
+
+    await controller.getProductByID(mockReq, mockRes);
+
+    expect(mockService.findByID).toHaveBeenCalledExactlyOnceWith(1);
+    if (product) {
+      expect(mockRes.json).toHaveBeenCalledWith(product);
+    } else {
+      expect(mockRes.status).toHaveBeenCalledWith(404);
+    }
+  },
+);
+
+test('hiding propagates failures from the atomic product and basket update', async () => {
+  const error = new Error('Basket removal failed');
+  prisma.product.update.mockRejectedValueOnce(error);
+
+  await expect(new ProductRepository().update(1, { hide: true })).rejects.toBe(
+    error,
+  );
 });
 
 test.each([{ productID: 1, name: 'Desk lamp' }, null])(
@@ -77,19 +213,24 @@ test.each([{ productID: 1, name: 'Desk lamp' }, null])(
 
 test('product service delegates its operations to the repository', async () => {
   const product = { productID: 1, name: 'Desk lamp', category: 'lighting' };
+  const categories = ['lighting', 'kitchen'];
   const repository = {
     findMany: vi.fn().mockResolvedValue([product]),
+    findManyForAdmin: vi.fn().mockResolvedValue([product]),
     findByID: vi.fn().mockResolvedValue(product),
     findByCategory: vi.fn().mockResolvedValue([product]),
     create: vi.fn().mockResolvedValue(product),
+    getProductCategories: vi.fn().mockResolvedValue(categories),
   };
   const service = new ProductService(repository);
 
   await expect(service.findAll()).resolves.toEqual([product]);
+  await expect(service.findAllForAdmin()).resolves.toEqual([product]);
   await expect(service.findByID(product.productID)).resolves.toBe(product);
   await expect(service.findByCategory(product.category)).resolves.toEqual([
     product,
   ]);
+  await expect(service.getProductCategories()).resolves.toEqual(categories);
 
   const data = {
     name: 'Desk lamp',
@@ -102,11 +243,13 @@ test('product service delegates its operations to the repository', async () => {
   await expect(service.create(data)).resolves.toBe(product);
 
   expect(repository.findMany).toHaveBeenCalledOnce();
+  expect(repository.findManyForAdmin).toHaveBeenCalledOnce();
   expect(repository.findByID).toHaveBeenCalledExactlyOnceWith(
     product.productID,
   );
   expect(repository.findByCategory).toHaveBeenCalledExactlyOnceWith(
     product.category,
   );
+  expect(repository.getProductCategories).toHaveBeenCalledOnce();
   expect(repository.create).toHaveBeenCalledExactlyOnceWith(data);
 });

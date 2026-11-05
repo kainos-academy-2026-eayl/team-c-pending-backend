@@ -1,5 +1,15 @@
 # Technologist Academy Node Service Template
 
+## Best sellers and product details
+
+- `GET /products/best-sellers` returns up to 12 products ranked by total positive
+  units in active order items. Cancelled, canceled, and refunded orders are
+  excluded case-insensitively; other statuses, including pending, count.
+  Rankings are all-time, with ascending product ID breaking ties. No qualifying
+  orders returns `[]`; unsold products are never substituted.
+- `GET /products/:productID` returns a product, `400` for an invalid positive
+  integer ID, or `404` for a missing product.
+
 A starter repository for building Node.js HTTP services in the Technologist Academy.
 
 This provides an Express service with TypeScript, a production build, Biome linting, and Vitest tests. `GET /health` returns service status and the current UTC timestamp. 
