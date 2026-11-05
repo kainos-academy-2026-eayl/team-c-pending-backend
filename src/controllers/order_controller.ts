@@ -13,16 +13,11 @@ const orderIDParamsSchema = z.object({
   orderID: z.coerce.number().int().positive().max(2147483647),
 });
 
-const orderItemSchema = z.object({
-  productID: z.number().int().positive().max(2147483647),
-  quantity: z.number().int().positive().max(2147483647),
-});
-
 const createOrderSchema = z.object({
   type: z.string().trim().min(1),
 });
 
-type CustomerResponse = Response<unknown, { customerID: number }>;
+type CustomerResponse = Response<unknown, { customerID: number; }>;
 
 const updateOrderSchema = z
   .object({
@@ -39,7 +34,7 @@ function isRecordNotFound(error: unknown): boolean {
 }
 
 export class OrderController {
-  constructor(private orderService: OrderService) {}
+  constructor(private orderService: OrderService) { }
 
   async getAll(res: CustomerResponse): Promise<void> {
     res

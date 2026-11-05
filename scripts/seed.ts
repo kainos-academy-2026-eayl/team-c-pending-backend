@@ -28,8 +28,7 @@ await prisma.product.createMany({
       price: 0.65,
       quantity: 12,
       category: 'Dispenser',
-      image:
-        '/images/miniDispenser.jpg',
+      image: '/images/miniDispenser.jpg',
     },
     {
       name: 'PureAir Oxygen Tank 5L',
@@ -38,8 +37,7 @@ await prisma.product.createMany({
       price: 1.2,
       quantity: 9,
       category: 'Tanks',
-      image:
-        '/images/5LTank.jpg',
+      image: '/images/5LTank.jpg',
     },
     {
       name: 'PureAir Oxygen Tank 10L',
@@ -48,17 +46,16 @@ await prisma.product.createMany({
       price: 1.1,
       quantity: 14,
       category: 'Tanks',
-      image:
-        '/images/10LTank.jpg',
+      image: '/images/10LTank.jpg',
     },
     {
       name: 'PureAir Emergency Tank',
-      description: 'Portable emergency oxygen tank for backup oxygen support, perfect for any zombie apocalypse scenario.',
+      description:
+        'Portable emergency oxygen tank for backup oxygen support, perfect for any zombie apocalypse scenario.',
       price: 1.75,
       quantity: 7,
       category: 'Tanks',
-      image:
-        '/images/emergencyRefill.jpg',
+      image: '/images/emergencyRefill.jpg',
     },
     {
       name: 'PureAir Lightweight Tank',
@@ -67,8 +64,7 @@ await prisma.product.createMany({
       price: 2.4,
       quantity: 11,
       category: 'Tanks',
-      image:
-        '/images/lightweightTank.jpg',
+      image: '/images/lightweightTank.jpg',
     },
     {
       name: 'OxyGo Portable 1',
@@ -77,8 +73,7 @@ await prisma.product.createMany({
       price: 2.25,
       quantity: 6,
       category: 'Portable',
-      image:
-        '/images/portable1.jpeg',
+      image: '/images/portable1.jpeg',
     },
     {
       name: 'OxyGo Portable Plus',
@@ -87,8 +82,7 @@ await prisma.product.createMany({
       price: 4.25,
       quantity: 5,
       category: 'Portable',
-      image:
-        '/images/portablePlus.png',
+      image: '/images/portablePlus.png',
     },
     {
       name: 'OxyGo Travel Companion',
@@ -97,8 +91,7 @@ await prisma.product.createMany({
       price: 1.5,
       quantity: 10,
       category: 'Portable',
-      image:
-        '/images/travel.jpg',
+      image: '/images/travel.jpg',
     },
     {
       name: 'OxyGo Compact',
@@ -107,8 +100,7 @@ await prisma.product.createMany({
       price: 3.8,
       quantity: 8,
       category: 'Portable',
-      image:
-        '/images/compact.jpg',
+      image: '/images/compact.jpg',
     },
     {
       name: 'BreathEasy Adult Mask',
@@ -116,8 +108,7 @@ await prisma.product.createMany({
       price: 2.9,
       quantity: 9,
       category: 'Masks',
-      image:
-        '/images/mask.jpg',
+      image: '/images/mask.jpg',
     },
     {
       name: 'BreathEasy Child Mask',
@@ -126,8 +117,7 @@ await prisma.product.createMany({
       price: 2.6,
       quantity: 13,
       category: 'Masks',
-      image:
-        '/images/mask.jpg',
+      image: '/images/mask.jpg',
     },
     {
       name: 'BreathEasy Premium Mask',
@@ -136,8 +126,7 @@ await prisma.product.createMany({
       price: 3.25,
       quantity: 7,
       category: 'Masks',
-      image:
-        '/images/premiumMask.jpg',
+      image: '/images/premiumMask.jpg',
     },
     {
       name: 'BreathEasy Vent Mask',
@@ -146,8 +135,7 @@ await prisma.product.createMany({
       price: 7.5,
       quantity: 4,
       category: 'Masks',
-      image:
-        '/images/ventMask.jpg',
+      image: '/images/ventMask.jpg',
     },
     {
       name: 'OxyPure Refill Canister Small',
@@ -156,8 +144,7 @@ await prisma.product.createMany({
       price: 4.1,
       quantity: 6,
       category: 'Refils',
-      image:
-        '/images/compact.jpg',
+      image: '/images/compact.jpg',
     },
     {
       name: 'OxyPure Refill Canister Medium',
@@ -165,8 +152,7 @@ await prisma.product.createMany({
       price: 2.2,
       quantity: 12,
       category: 'Refils',
-      image:
-        '/images/5lTank.jpg',
+      image: '/images/5lTank.jpg',
     },
     {
       name: 'OxyPure Refill Canister Large',
@@ -175,8 +161,7 @@ await prisma.product.createMany({
       price: 5.75,
       quantity: 5,
       category: 'Refils',
-      image:
-        '/images/10lTank.jpg',
+      image: '/images/10lTank.jpg',
     },
     {
       name: 'OxyPure Travel Refill',
@@ -185,8 +170,7 @@ await prisma.product.createMany({
       price: 1.8,
       quantity: 16,
       category: 'Refils',
-      image:
-        '/images/travel.jpg',
+      image: '/images/travel.jpg',
     },
     {
       name: 'OxyPure Emergency Refill',
@@ -195,8 +179,7 @@ await prisma.product.createMany({
       price: 6.25,
       quantity: 3,
       category: 'Refils',
-      image:
-        '/images/emergencyRefill.jpg',
+      image: '/images/emergencyRefill.jpg',
     },
   ],
 });
