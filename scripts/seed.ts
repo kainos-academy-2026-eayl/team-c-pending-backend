@@ -73,7 +73,7 @@ await prisma.product.createMany({
       price: 500,
       quantity: 6,
       category: 'Portable',
-      image: '/images/portable1.jpeg',
+      image: '/images/portableTank.jpg',
     },
     {
       name: 'OxyGo Portable Plus',
@@ -82,7 +82,7 @@ await prisma.product.createMany({
       price: 600,
       quantity: 5,
       category: 'Portable',
-      image: '/images/portablePlus.png',
+      image: '/images/portableTank.jpg',
     },
     {
       name: 'OxyGo Travel Companion',
