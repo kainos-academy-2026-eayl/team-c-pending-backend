@@ -189,6 +189,6 @@ await prisma.product.createMany({
       quantity: 2,
       category: 'Ventilators',
       image: '/images/IronLung.jpg',
-    }
+    },
   ],
 });
