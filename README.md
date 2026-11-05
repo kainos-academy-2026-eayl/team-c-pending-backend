@@ -45,6 +45,9 @@ curl http://localhost:3000/health
 
 Use `npm ci` rather than `npm install`. It installs the exact versions recorded in `package-lock.json`, so everyone on the team runs identical dependencies. Use `npm install` only when you are deliberately adding or upgrading a package.
 
+Run the service from the repository root. Files in `images/` are served at
+`/images`, for example `http://localhost:3000/images/mask.jpg`.
+
 ## Customer, product, and order IDs
 
 Customer records use `customerID` and product records use `productID`, including

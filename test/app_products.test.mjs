@@ -1,4 +1,5 @@
 import { once } from 'node:events';
+import { readFile } from 'node:fs/promises';
 import { expect, test, vi } from 'vitest';
 import { createApp } from '../src/app.ts';
 
@@ -45,6 +46,28 @@ test('createApp mounts the product router at /products', async () => {
   } finally {
     await new Promise((resolve, reject) => {
       server.close((error) => (error ? reject(error) : resolve()));
+    });
+
+    test('createApp serves image files at /images', async () => {
+      const app = createApp();
+      const server = app.listen(0, '127.0.0.1');
+
+      try {
+        await once(server, 'listening');
+        const response = await fetch(
+          `http://127.0.0.1:${server.address().port}/images/mask.jpg`,
+        );
+
+        expect(response.status).toBe(200);
+        expect(response.headers.get('content-type')).toBe('image/jpeg');
+        expect(Buffer.from(await response.arrayBuffer())).toEqual(
+          await readFile(new URL('../images/mask.jpg', import.meta.url)),
+        );
+      } finally {
+        await new Promise((resolve, reject) => {
+          server.close((error) => (error ? reject(error) : resolve()));
+        });
+      }
     });
   }
 });

@@ -10,8 +10,7 @@ await prisma.product.createMany({
       price: 0.5,
       quantity: 10,
       category: 'Dispenser',
-      image:
-        'https://prashanthihomecarelabsanddiagnostics.com/wp-content/uploads/2026/04/Oxygen-Concentrator.webp',
+      image: '/images/homeDispenser.jpg',
     },
     {
       name: 'OxyFlow Pro Dispenser',
@@ -20,8 +19,7 @@ await prisma.product.createMany({
       price: 0.3,
       quantity: 15,
       category: 'Dispenser',
-      image:
-        'https://image.made-in-china.com/2f0j00aCoqfnvkETcm/Medical-Equipment-5-Liter-Oxygen-Concentrator-for-Hospital-with-93-High-Purity-Produce-Oxygen.jpg',
+      image: '/images/proDispenser.jpg',
     },
     {
       name: 'OxyFlow Mini Dispenser',
@@ -31,7 +29,7 @@ await prisma.product.createMany({
       quantity: 12,
       category: 'Dispenser',
       image:
-        'https://image.made-in-china.com/2f0j00nUFbPSOIQekv/Medical-Equipment-3-Liter-Portable-Oxygen-Concentrator-with-93-High-Purity-Hospital-Equipment.jpg',
+        '/images/miniDispenser.jpg',
     },
     {
       name: 'PureAir Oxygen Tank 5L',
@@ -41,7 +39,7 @@ await prisma.product.createMany({
       quantity: 9,
       category: 'Tanks',
       image:
-        'https://www.shutterstock.com/image-photo/hospital-medical-gas-oxygen-flowmeter-concentrator-260nw-2468254537.jpg',
+        '/images/5LTank.jpg',
     },
     {
       name: 'PureAir Oxygen Tank 10L',
@@ -51,16 +49,16 @@ await prisma.product.createMany({
       quantity: 14,
       category: 'Tanks',
       image:
-        'https://www.shutterstock.com/image-photo/oxygen-supply-regulation-valve-hospital-room-260nw-2468254529.jpg',
+        '/images/10LTank.jpg',
     },
     {
       name: 'PureAir Emergency Tank',
-      description: 'Portable emergency oxygen tank for backup oxygen support.',
+      description: 'Portable emergency oxygen tank for backup oxygen support, perfect for any zombie apocalypse scenario.',
       price: 1.75,
       quantity: 7,
       category: 'Tanks',
       image:
-        'https://www.shutterstock.com/image-photo/set-icon-oxygen-tank-260nw-2474183821.jpg',
+        '/images/emergencyRefill.jpg',
     },
     {
       name: 'PureAir Lightweight Tank',
@@ -70,7 +68,7 @@ await prisma.product.createMany({
       quantity: 11,
       category: 'Tanks',
       image:
-        'https://images.unsplash.com/photo-1518977676601-b53f82aba655?auto=format&fit=crop&w=512&h=512&q=80',
+        '/images/lightweightTank.jpg',
     },
     {
       name: 'OxyGo Portable 1',
@@ -80,7 +78,7 @@ await prisma.product.createMany({
       quantity: 6,
       category: 'Portable',
       image:
-        'https://images.unsplash.com/photo-1576045057995-568f588f82fb?auto=format&fit=crop&w=512&h=512&q=80',
+        '/images/portable1.jpeg',
     },
     {
       name: 'OxyGo Portable Plus',
@@ -90,7 +88,7 @@ await prisma.product.createMany({
       quantity: 5,
       category: 'Portable',
       image:
-        'https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=512&h=512&q=80',
+        '/images/portablePlus.png',
     },
     {
       name: 'OxyGo Travel Companion',
@@ -100,7 +98,7 @@ await prisma.product.createMany({
       quantity: 10,
       category: 'Portable',
       image:
-        'https://images.unsplash.com/photo-1555507036-ab1f4038808a?auto=format&fit=crop&w=512&h=512&q=80',
+        '/images/travel.jpg',
     },
     {
       name: 'OxyGo Compact',
@@ -110,7 +108,7 @@ await prisma.product.createMany({
       quantity: 8,
       category: 'Portable',
       image:
-        'https://images.unsplash.com/photo-1486297678162-eb2a19b0a32d?auto=format&fit=crop&w=512&h=512&q=80',
+        '/images/compact.jpg',
     },
     {
       name: 'BreathEasy Adult Mask',
@@ -119,7 +117,7 @@ await prisma.product.createMany({
       quantity: 9,
       category: 'Masks',
       image:
-        'https://images.unsplash.com/photo-1488477181946-6428a0291777?auto=format&fit=crop&w=512&h=512&q=80',
+        '/images/mask.jpg',
     },
     {
       name: 'BreathEasy Child Mask',
@@ -129,7 +127,7 @@ await prisma.product.createMany({
       quantity: 13,
       category: 'Masks',
       image:
-        'https://images.unsplash.com/photo-1550583724-b2692b85b150?auto=format&fit=crop&w=512&h=512&q=80',
+        '/images/mask.jpg',
     },
     {
       name: 'BreathEasy Premium Mask',
@@ -139,7 +137,7 @@ await prisma.product.createMany({
       quantity: 7,
       category: 'Masks',
       image:
-        'https://images.unsplash.com/photo-1600271886742-f049cd451bba?auto=format&fit=crop&w=512&h=512&q=80',
+        '/images/premiumMask.jpg',
     },
     {
       name: 'BreathEasy Vent Mask',
@@ -149,7 +147,7 @@ await prisma.product.createMany({
       quantity: 4,
       category: 'Masks',
       image:
-        'https://images.unsplash.com/photo-1447933601403-0c6688de566e?auto=format&fit=crop&w=512&h=512&q=80',
+        '/images/ventMask.jpg',
     },
     {
       name: 'OxyPure Refill Canister Small',
@@ -159,7 +157,7 @@ await prisma.product.createMany({
       quantity: 6,
       category: 'Refils',
       image:
-        'https://images.unsplash.com/photo-1556679343-c7306c1976bc?auto=format&fit=crop&w=512&h=512&q=80',
+        '/images/compact.jpg',
     },
     {
       name: 'OxyPure Refill Canister Medium',
@@ -168,7 +166,7 @@ await prisma.product.createMany({
       quantity: 12,
       category: 'Refils',
       image:
-        'https://images.unsplash.com/photo-1606312619070-d48b4c652a52?auto=format&fit=crop&w=512&h=512&q=80',
+        '/images/5lTank.jpg',
     },
     {
       name: 'OxyPure Refill Canister Large',
@@ -178,7 +176,7 @@ await prisma.product.createMany({
       quantity: 5,
       category: 'Refils',
       image:
-        'https://images.unsplash.com/photo-1508061253366-f7da158b6d46?auto=format&fit=crop&w=512&h=512&q=80',
+        '/images/10lTank.jpg',
     },
     {
       name: 'OxyPure Travel Refill',
@@ -188,7 +186,7 @@ await prisma.product.createMany({
       quantity: 16,
       category: 'Refils',
       image:
-        'https://images.unsplash.com/photo-1566478989037-eec170784d0b?auto=format&fit=crop&w=512&h=512&q=80',
+        '/images/travel.jpg',
     },
     {
       name: 'OxyPure Emergency Refill',
@@ -198,7 +196,7 @@ await prisma.product.createMany({
       quantity: 3,
       category: 'Refils',
       image:
-        'https://images.unsplash.com/photo-1587049352846-4a222e784d38?auto=format&fit=crop&w=512&h=512&q=80',
+        '/images/emergencyRefill.jpg',
     },
   ],
 });
