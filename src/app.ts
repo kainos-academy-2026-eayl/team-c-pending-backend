@@ -26,6 +26,8 @@ import ReviewService from './services/review_service';
 export function createApp(): Express {
   const app = express();
 
+  app.use('/images', express.static('images'));
+
   app.use(express.json({ limit: '100kb' }));
   // initialize repositories and services
   const customerRepository = new CustomerRepository();
