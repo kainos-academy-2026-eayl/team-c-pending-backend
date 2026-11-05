@@ -47,7 +47,6 @@ test('createApp mounts the product router at /products', async () => {
     await new Promise((resolve, reject) => {
       server.close((error) => (error ? reject(error) : resolve()));
     });
-
   }
 });
 
