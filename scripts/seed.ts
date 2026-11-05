@@ -55,7 +55,7 @@ await prisma.product.createMany({
       price: 1750,
       quantity: 7,
       category: 'Tanks',
-      image: '/images/emergencyRefill.jpg',
+      image: '/images/emergencyTank.jpg',
     },
     {
       name: 'PureAir Lightweight Tank',
@@ -181,5 +181,14 @@ await prisma.product.createMany({
       category: 'Refils',
       image: '/images/emergencyRefill.jpg',
     },
+    {
+      name: 'Iron Lung',
+      description:
+        'For those times when you forget to breathe, you can have a negitive pressure ventilator at your disposal.',
+      price: 10000,
+      quantity: 2,
+      category: 'Ventilators',
+      image: '/images/IronLung.jpg',
+    }
   ],
 });
