@@ -298,6 +298,70 @@ The server binds to `0.0.0.0` so it is reachable from outside a container. Add n
 
 ## Troubleshooting
 
+### Docker builds
+
+From the backend directory:
+
+```sh
+docker build -t team-c-backend .
+docker build -f Dockerfile.dev -t team-c-backend:dev .
+docker run --rm --init -p 3000:3000 --env-file .env team-c-backend
+```
+
+Set `PORT=3000` in the runtime environment and provide `DATABASE_URL` and
+`JWT_SECRET`. A database running in another Compose service must be addressed by
+its service name, not `localhost`.
+
+Compose runs a separate one-shot `db-init` service using the development image.
+It waits for PostgreSQL to be healthy, then runs `prisma db push` and
+`prisma db seed` with `prisma7.config.ts`. The backend starts only after both
+commands succeed. Backend restarts do not rerun database setup.
+
+Initialization happens against a running database, not during the image build.
+No destructive `--accept-data-loss` flag is used. The seed is not idempotent:
+starting the initialization service again (including subsequent Compose `up`
+invocations or recreating the stack) can add duplicate sample products.
+Use this setup only with a development database. The production image is
+unchanged; apply migrations separately there.
+
+If Prisma reports `unable to get local issuer certificate` on a company network,
+the container may not trust the company's HTTPS inspection CA (for example,
+Zscaler), even though the host does. Obtain the approved CA bundle in PEM format
+from IT or export the already-trusted root and intermediate CA certificates from
+the system keychain into one PEM file, then pass it as a BuildKit secret:
+
+```sh
+docker build --secret id=corporate_ca,src=/absolute/path/company-root-ca.crt \
+  --no-cache -t team-c-backend .
+docker build --secret id=corporate_ca,src=/absolute/path/company-root-ca.crt \
+  --no-cache -f Dockerfile.dev -t team-c-backend:dev .
+```
+
+Both images add these public CAs to their trust store for system tools and Node.js.
+It is not a private key; never supply a private key or disable TLS verification.
+The certificate does not need to be copied into the repository.
+Include intermediate CAs if the inspection proxy does not send its complete
+certificate chain. Use `--no-cache` when changing the CA bundle, because BuildKit
+does not invalidate cached layers when secret contents change.
+
+For Compose builds, add the following to the Compose configuration that defines
+the backend (paths are relative to that Compose file):
+
+```yaml
+services:
+  backend:
+    build:
+      secrets:
+        - corporate_ca
+secrets:
+  corporate_ca:
+    file: ${CORPORATE_CA_CERT}
+```
+
+Set `CORPORATE_CA_CERT` to the absolute path of the approved CA file before
+running `docker compose build backend`. This is only needed on networks requiring
+the company CA.
+
 **`Cannot find module` or unexpected type errors** — you may be on the wrong Node version. Run `nvm use`, then `rm -rf node_modules && npm ci`.
 
 **`PORT environment variable is not set`** — you have not created your `.env`. Run `cp .env.example .env`.
