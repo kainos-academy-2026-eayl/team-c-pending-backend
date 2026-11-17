@@ -1,6 +1,8 @@
 name: Manual workflow
 
 on:
+  workflow_dispatch:
+
   push:
     branches:
       - main
@@ -15,6 +17,10 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         
+      - name: Manual workflow message
+        if: github.event_name == 'workflow_dispatch'
+        run: echo "The workflow was started manually!"
+
       - name: Main branch push message
         if: github.event_name == 'push'
         run: echo "Something has been pushed to main!"
