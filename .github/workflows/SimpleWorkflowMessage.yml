@@ -1,0 +1,21 @@
+name: Manual workflow
+
+on:
+  push:
+    branches:
+      - main
+
+  pull_request:
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Main branch push message
+        if: github.event_name == 'push'
+        run: echo "Something has been pushed to main!"
+
+      - name: Pull request message
+        if: github.event_name == 'pull_request'
+        run: echo "A pull request has been made"
