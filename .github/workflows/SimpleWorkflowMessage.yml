@@ -1,4 +1,4 @@
-name: Manual workflow
+name: Backend CI
 
 on:
   workflow_dispatch:
@@ -8,17 +8,27 @@ on:
       - main
 
   pull_request:
+    branches:
+      - main
 
 jobs:
-  notify:
+  lint-test:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    
+
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - run: npm ci
+
+      - run: npm run lint
+
+      - run: npm test
+
       - name: Manual workflow message
         if: github.event_name == 'workflow_dispatch'
         run: echo "The workflow was started manually!"
@@ -31,7 +41,15 @@ jobs:
         if: github.event_name == 'pull_request'
         run: echo "A pull request has been made"
 
+  docker-build-push:
+    needs: lint-test
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
       - run: docker build -t acraiacademy26.azurecr.io/team-c-pending-backend:${{ github.sha }} .
-      - run: echo "${{ secrets.ACR_PASSWORD }}" | docker login -u TeamCPendingBackendPusher --password-stdin acraiacademy26.azurecr.io
+
+      - run: echo "${{ secrets.ACR_PASSWORD }}" | docker login -u "${{ secrets.ACR_USERNAME }}" --password-stdin acraiacademy26.azurecr.io
+
       - run: docker push acraiacademy26.azurecr.io/team-c-pending-backend:${{ github.sha }}
- 
