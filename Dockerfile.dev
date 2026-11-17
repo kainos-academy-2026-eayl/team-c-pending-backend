@@ -6,14 +6,15 @@ WORKDIR /app
 # Trust an optional company CA without disabling TLS verification.
 RUN --mount=type=secret,id=corporate_ca \
     if [ -s /run/secrets/corporate_ca ]; then \
-      mkdir -p /usr/local/share/ca-certificates; \
-      awk '/-----BEGIN CERTIFICATE-----/ { n++ } n { print > ("/usr/local/share/ca-certificates/corporate-" n ".crt") }' /run/secrets/corporate_ca; \
-      cat /run/secrets/corporate_ca >> /etc/ssl/certs/ca-certificates.crt; \
+    mkdir -p /usr/local/share/ca-certificates; \
+    cp /run/secrets/corporate_ca /usr/local/share/ca-certificates/corporate-ca-bundle.pem; \
+    awk '/-----BEGIN CERTIFICATE-----/ { n++ } n { print > ("/usr/local/share/ca-certificates/corporate-" n ".crt") }' /run/secrets/corporate_ca; \
+    cat /run/secrets/corporate_ca >> /etc/ssl/certs/ca-certificates.crt; \
     fi \
     && apk add --no-cache ca-certificates dumb-init openssl \
     && update-ca-certificates
 
-ENV NODE_EXTRA_CA_CERTS=/etc/ssl/certs/ca-certificates.crt \
+ENV NODE_EXTRA_CA_CERTS=/usr/local/share/ca-certificates/corporate-ca-bundle.pem \
     NODE_ENV=development \
     PORT=3000
 
