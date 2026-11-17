@@ -4,31 +4,44 @@ FROM node:22-alpine
 WORKDIR /app
 
 # Trust an optional company CA without disabling TLS verification.
+# Mount the CA as a secret and configure it for the container
+# The CA is expected to be provided as a secret named 'corporate_ca'
 RUN --mount=type=secret,id=corporate_ca \
     if [ -s /run/secrets/corporate_ca ]; then \
     mkdir -p /usr/local/share/ca-certificates; \
+    # Copy the CA to the system's CA certificates directory
     cp /run/secrets/corporate_ca /usr/local/share/ca-certificates/corporate-ca-bundle.pem; \
     awk '/-----BEGIN CERTIFICATE-----/ { n++ } n { print > ("/usr/local/share/ca-certificates/corporate-" n ".crt") }' /run/secrets/corporate_ca; \
+    # Split theCA into individual certificate files for the system's CA certificates directory
     cat /run/secrets/corporate_ca >> /etc/ssl/certs/ca-certificates.crt; \
     fi \
+    # Install necessary packages and update CA certificates
     && apk add --no-cache ca-certificates dumb-init openssl \
     && update-ca-certificates
 
+# Set the environment variable NODE_EXTRA_CA_CERTS for Node.js to use the CA bundle
 ENV NODE_EXTRA_CA_CERTS=/usr/local/share/ca-certificates/corporate-ca-bundle.pem \
+    # Set the Node.js environment to development and the application port to 3000
     NODE_ENV=development \
     PORT=3000
 
+# Copy package.json, package-lock.json, and .npmrc to the working directory
 COPY package*.json .npmrc ./
 
 # Run generation explicitly once the Prisma schema is available.
 RUN npm ci --ignore-scripts && npm rebuild esbuild
 
+# Copy the rest of the code to the working directory
 COPY . .
 
+# Generate Prisma client based on the schema and config file
 RUN npx prisma generate --config prisma7.config.ts
 
+# Expose the application port to the host
 EXPOSE 3000
 
+# Set the entrypoint for the container to use dumb-init for proper handling
 ENTRYPOINT ["dumb-init", "--"]
 
+# Set the default command to run the development server
 CMD ["npm", "run", "dev"]
