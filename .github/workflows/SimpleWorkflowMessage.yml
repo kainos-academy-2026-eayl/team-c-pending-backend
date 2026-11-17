@@ -10,8 +10,11 @@ on:
 jobs:
   notify:
     runs-on: ubuntu-latest
-
+    
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
       - name: Main branch push message
         if: github.event_name == 'push'
         run: echo "Something has been pushed to main!"
