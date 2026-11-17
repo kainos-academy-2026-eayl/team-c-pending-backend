@@ -1,5 +1,7 @@
 name: Backend CI
 
+# This workflow is a manual dispatch that is triggered by an action, push or pull request
+# It checks out the code, prints messages based on the event type, and builds and pushes a Docker image.
 on:
   workflow_dispatch:
 
@@ -11,8 +13,10 @@ on:
     branches:
       - main
 
+# These are all the different jobs that will run throughout this workflow
 jobs:
   lint-test:
+    # This runs on ubuntu
     runs-on: ubuntu-latest
 
     steps:
@@ -28,15 +32,17 @@ jobs:
       - run: npm run lint
 
       - run: npm test
-
+      
+      #Message for manual workflow
       - name: Manual workflow message
         if: github.event_name == 'workflow_dispatch'
         run: echo "The workflow was started manually!"
-
+      #Message for pushes to main branch
       - name: Main branch push message
         if: github.event_name == 'push'
         run: echo "Something has been pushed to main!"
 
+      #Message for pull requests
       - name: Pull request message
         if: github.event_name == 'pull_request'
         run: echo "A pull request has been made"
@@ -46,6 +52,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # Build and push Docker image to the azure container registry
       - uses: actions/checkout@v7
 
       - run: docker build -t acraiacademy26.azurecr.io/team-c-pending-backend:${{ github.sha }} .
