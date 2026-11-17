@@ -48,7 +48,7 @@ jobs:
         if: github.event_name == 'pull_request'
         run: echo "A pull request has been made"
 
-  docker-build-push:
+  docker-build:
     if: github.event_name == 'push'
     needs: lint-test
     runs-on: ubuntu-latest
@@ -58,7 +58,3 @@ jobs:
       - uses: actions/checkout@v7
 
       - run: docker build -t acraiacademy26.azurecr.io/team-c-pending-backend:${{ github.sha }} .
-
-      - run: echo "${{ secrets.ACR_PASSWORD }}" | docker login -u "${{ secrets.ACR_USERNAME }}" --password-stdin acraiacademy26.azurecr.io
-
-      - run: docker push acraiacademy26.azurecr.io/team-c-p
