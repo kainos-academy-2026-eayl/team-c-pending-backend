@@ -49,12 +49,17 @@ jobs:
         run: echo "A pull request has been made"
 
   docker-build:
-    if: github.event_name == 'push'
     needs: lint-test
     runs-on: ubuntu-latest
 
     steps:
-      # Build and push Docker image to the Azure Container Registry
       - uses: actions/checkout@v7
 
-      - run: docker build -t acraiacademy26.azurecr.io/team-c-pending-backend:${{ github.sha }} .
+      # Build Docker image
+      - name: Build Docker image
+        run: docker build -t acraiacademy26.azurecr.io/team-c-pending-backend:${{ github.sha }} .
+
+      # Push to registry only on main branch pushes
+      - name: Push Docker image to Azure Container Registry
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: docker push acraiacademy26.azurecr.io/team-c-pending-backend:${{ github.sha }}
