@@ -59,7 +59,33 @@ jobs:
       - name: Build Docker image
         run: docker build -t acraiacademy26.azurecr.io/team-c-pending-backend:${{ github.sha }} .
 
-      # Push to registry only on main branch pushes
+      # Save Docker image as artifact
+      - name: Save Docker image
+        run: docker save -o "${{ runner.temp }}/docker-image.tar" acraiacademy26.azurecr.io/team-c-pending-backend:${{ github.sha }}
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: docker-image
+          path: ${{ runner.temp }}/docker-image.tar
+          if-no-files-found: error
+
+  docker-push:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: docker-build
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: docker-image
+          path: ${{ runner.temp }}
+
+      # Load Docker image from artifact
+      - name: Load Docker image
+        run: docker load -i "${{ runner.temp }}/docker-image.tar"
+
+      # Push Docker image to Azure Container Registry
       - name: Push Docker image to Azure Container Registry
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: docker push acraiacademy26.azurecr.io/team-c-pending-backend:${{ github.sha }}
