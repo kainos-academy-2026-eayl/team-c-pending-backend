@@ -10,28 +10,28 @@ on:
   pull_request:
 
 jobs:
-  notify:
-    runs-on: ubuntu-latest
+  notify: # this is the name of the job
+    runs-on: ubuntu-latest # the job will run on the latest Ubuntu runner
     permissions:
-      contents: read
+      contents: read # read access only
     
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - name: Checkout code # name of the step in GitHub Actions logs
+        uses: actions/checkout@v4 # downloads repository content to the runner
         
       - name: Manual workflow message
-        if: github.event_name == 'workflow_dispatch'
+        if: github.event_name == 'workflow_dispatch' # only runs if the workflow was manually triggered
         run: echo "The workflow was started manually!"
 
       - name: Main branch push message
-        if: github.event_name == 'push'
+        if: github.event_name == 'push' # only runs if there was a push event
         run: echo "Something has been pushed to main!"
 
       - name: Pull request message
-        if: github.event_name == 'pull_request'
+        if: github.event_name == 'pull_request' # only runs if there was a pull request event
         run: echo "A pull request has been made"
 
-      - run: docker build -t acraiacademy26.azurecr.io/team-c-pending-backend:${{ github.sha }} .
-      - run: echo "${{ secrets.ACR_PASSWORD }}" | docker login -u TeamCPendingBackendPusher --password-stdin acraiacademy26.azurecr.io
-      - run: docker push acraiacademy26.azurecr.io/team-c-pending-backend:${{ github.sha }}
+      - run: docker build -t acraiacademy26.azurecr.io/team-c-pending-backend:${{ github.sha }} . # build a docker image + tag with SHA- uniquely identifying
+      - run: echo "${{ secrets.ACR_PASSWORD }}" | docker login -u TeamCPendingBackendPusher --password-stdin acraiacademy26.azurecr.io # password-GitHub secrets, username-TeamCPendingBackendPusher, login
+      - run: docker push acraiacademy26.azurecr.io/team-c-pending-backend:${{ github.sha }} # push the docker image to the Azure container registry
  
