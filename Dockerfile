@@ -5,13 +5,13 @@ WORKDIR /app
 
 # Trust an optional company CA without disabling TLS verification.
 RUN --mount=type=secret,id=corporate_ca \
-    if [ -s /run/secrets/corporate_ca ]; then \
-      mkdir -p /usr/local/share/ca-certificates; \
-      awk '/-----BEGIN CERTIFICATE-----/ { n++ } n { print > ("/usr/local/share/ca-certificates/corporate-" n ".crt") }' /run/secrets/corporate_ca; \
-      cat /run/secrets/corporate_ca >> /etc/ssl/certs/ca-certificates.crt; \
-    fi \
-    && apk add --no-cache ca-certificates dumb-init openssl \
-    && update-ca-certificates
+  if [ -s /run/secrets/corporate_ca ]; then \
+  mkdir -p /usr/local/share/ca-certificates; \
+  awk '/-----BEGIN CERTIFICATE-----/ { n++ } n { print > ("/usr/local/share/ca-certificates/corporate-" n ".crt") }' /run/secrets/corporate_ca; \
+  cat /run/secrets/corporate_ca >> /etc/ssl/certs/ca-certificates.crt; \
+  fi \
+  && apk add --no-cache ca-certificates dumb-init openssl \
+  && update-ca-certificates
 
 ENV NODE_EXTRA_CA_CERTS=/etc/ssl/certs/ca-certificates.crt
 
@@ -20,13 +20,15 @@ FROM base AS builder
 COPY package*.json .npmrc ./
 
 # Run generation explicitly once the Prisma schema is available.
-RUN npm ci --ignore-scripts && npm rebuild esbuild
+RUN npm ci --ignore-scripts && npm rebuild esbuild better-sqlite3
 
 COPY . .
 
 RUN npx prisma generate --config prisma7.config.ts \
-    && npm run build \
-    && npm prune --omit=dev --ignore-scripts
+  && npm run build \
+  && npx prisma db push --config prisma7.config.ts \
+  && npx prisma db seed --config prisma7.config.ts \
+  && npm prune --omit=dev --ignore-scripts
 
 FROM base AS production
 
@@ -35,6 +37,8 @@ ENV NODE_ENV=production PORT=3000
 COPY --from=builder /app/package*.json ./
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/dist ./dist
+COPY --chown=node:node --from=builder /app/dev.db ./dev.db
+RUN chown node:node /app
 
 USER node
 

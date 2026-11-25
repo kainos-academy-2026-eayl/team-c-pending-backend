@@ -126,11 +126,10 @@ test('best sellers rank by active units and restore database ranking order', asy
     by: ['productID'],
     where: {
       quantity: { gt: 0 },
-      itemStatus: { equals: 'active', mode: 'insensitive' },
+      itemStatus: { equals: 'active' },
       order: {
         status: {
           notIn: ['cancelled', 'canceled', 'refunded'],
-          mode: 'insensitive',
         },
       },
     },
