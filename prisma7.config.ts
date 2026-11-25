@@ -10,6 +10,6 @@ export default defineConfig({
     seed: 'tsx scripts/seed.ts',
   },
   datasource: {
-    url: "file:./dev.db",
+    url: 'file:./dev.db',
   },
 });
