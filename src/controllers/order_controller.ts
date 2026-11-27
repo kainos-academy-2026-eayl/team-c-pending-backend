@@ -14,7 +14,7 @@ const orderIDParamsSchema = z.object({
   orderID: z.coerce.number().int().positive().max(2147483647),
 });
 
-const _orderItemSchema = z.object({
+const orderItemSchema = z.object({
   productID: z.number().int().positive().max(2147483647),
   quantity: z.number().int().positive().max(2147483647),
 });
