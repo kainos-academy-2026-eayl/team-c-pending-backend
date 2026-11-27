@@ -190,7 +190,7 @@ await prisma.product.createMany({
       quantity: 3,
       category: 'Pantry',
       image:
-        'https://images.unsplash.com/photo-1587049352846-4a222e784d38?auto=format&fit=crop&w=512&h=512&q=80',
+        'https://images.pexels.com/photos/5634207/pexels-photo-5634207.jpeg?auto=compress&cs=tinysrgb&w=512',
     },
     {
       name: 'Olive Oil',

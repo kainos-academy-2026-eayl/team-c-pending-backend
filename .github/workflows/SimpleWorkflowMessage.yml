@@ -45,7 +45,7 @@ jobs:
           if-no-files-found: error
 
   docker-push:
-    if: github.event_name == 'push'
+    if: github.event_name == 'push' || contains( github.event.pull_request.labels.*.name, 'push')
     needs: docker-build
     runs-on: ubuntu-latest
     steps:
@@ -57,4 +57,7 @@ jobs:
       - run: docker load -i "${{ runner.temp }}/docker-image.tar"
       - run: az login --service-principal -u ${{ secrets.AZURE_CLIENT_ID }} -p ${{ secrets.AZURE_CLIENT_SECRET }} --tenant ${{ secrets.AZURE_TENANT_ID }}
       - run: az acr login --name acraiacademy26
+      - run: docker tag acraiacademy26.azurecr.io/team-c-pending-backend:${{ github.sha }} acraiacademy26.azurecr.io/team-c-pending-backend:latest
       - run: docker push acraiacademy26.azurecr.io/team-c-pending-backend:${{ github.sha }}
+      - run: docker push acraiacademy26.azurecr.io/team-c-pending-backend:latest
+      - run: az containerapp update --name pendingbackendcontainerappdev --resource-group resource_group_pendingdev --image acraiacademy26.azurecr.io/team-c-pending-backend:latest --set-env-vars REDEPLOY=${{ github.run_id }}-${{ github.run_attempt }}
